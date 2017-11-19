@@ -170,7 +170,7 @@ if configuration ==  110 : # RX seul ON VA CONFIGURER LE RX il y a un capteur su
          trame=trame+delimiteur+str(poids_en_gr)
          timestr = time.localtime()#on met un timestamp sur la trame
          timestr=str(timestr)
-         trame=delimiteur+timestr+trame+("/n")
+         trame=delimiteur+timestr+trame+"\n"
          i=i+1
          if carte_sd:
              flashWriteData(trame)
