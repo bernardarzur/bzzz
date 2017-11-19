@@ -1,15 +1,30 @@
 # HX711_1
 # brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#5 volts -MAJ 3 avril 2017
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
-HX_DT_1 = 'P21'
-HX_SCK_1 = 'P22'
+HX_DT_1    = 'P18'#P18 a P13 sont des INPUT
+HX_SCK_1  = 'P23'
 # HX711_2
-HX_DT_2 = 'P1'
-HX_SCK_2 = 'P2'
+HX_DT_2    = 'P17'
+HX_SCK_2  = 'P22'
+# HX711_3
+HX_DT_3    = 'P15'#la P16 sert pour tension batterie?
+HX_SCK_3  = 'P21'
+# HX711_4
+HX_DT_4    = 'P14'
+HX_SCK_4  = 'P20'
+# HX711_5
+HX_DT_5     = 'P13'
+HX_SCK_5   = 'P19'
+# HX711_6
+HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
+HX_SCK_6  = 'P10'
 nombre_capteurs=6                 #nombre de capteurs sur la balance
 tare_20kg = [-44450,95900,-95950, -95950, -95950, -95950  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 04/04/2017 
 valeur_20kg =[478650, 613000,408200, 613500, 613500, 613500 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
 etalon_20kg = 5202                 # etalonnage 20kg_1: poids de l'étalon en grammes
+mesure_20kg=[0, 0, 0, 0, 0, 0]
+lecture_capteur=[0, 0, 0, 0, 0, 0,]
+
 delai_avant_acquisition=0.1     #on attend delai avant de lancer les mesures par le HX
 tempo_lora_demarrage = 1      #le temps que la carte lora soit opérationnelle
 tempo_lora_emission = 3          #le temps que la carte lora finisse l'émission
@@ -63,3 +78,17 @@ GREEN = 0x007f00
 YELLOW = 0x7f7f00
 RED = 0x7f0000
 BLUE = 0x00007f
+
+
+#deepsleep
+WPUA_ADDR = (0x09)
+OPTION_REG_ADDR = (0x0E)
+IOCAP_ADDR = (0x1A)
+IOCAN_ADDR = (0x1B)
+
+WAKE_STATUS_ADDR = (0x40)
+MIN_BAT_ADDR = (0x41)
+SLEEP_TIME_ADDR = (0x42)
+CTRL_0_ADDR = (0x45)
+
+EXP_RTC_PERIOD = (7000)

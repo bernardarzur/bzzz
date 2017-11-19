@@ -44,6 +44,20 @@ def acquisitionCapteur20kg_2( tare,mesure,etalon, nombre_point) :
      capteur_20kg_2.power_down()# put the ADC in sleep mode
      return lecture_capteur 
 
+def acquisitionCapteur20kg_6( tare,mesure,etalon, nombre_point) :
+     capteur_20kg_6.power_up()#reveille le HX711 n°6
+     time.sleep (delai_avant_acquisition)          
+     lecture_capteur = capteur_20kg_6.read_average(nombre_point)
+     poids_en_gr=(lecture_capteur-tare)/mesure*etalon
+     print("   valeur ADC 20kg_6 : ", lecture_capteur,"*",  poids_en_gr,"*")
+     capteur_20kg_6.power_down()# put the ADC in sleep mode
+     return lecture_capteur 
+
+def flashWriteData(numero_trame) : #on écrit numero de trame dans fichier numero trame 
+     ofi=open('fichier_data', 'a')
+     ofi.write(numero_trame)#on écrit numero de trame dans fichier numero trame
+     ofi.close()
+     return 
 
 def flashWriteTrame(numero_trame) : #on écrit numero de trame dans fichier numero trame 
      ofi=open('fichier_numero_trame', 'w')
@@ -57,14 +71,14 @@ def flashReadTrame() : #on lit un numero de trame dans le fichier numero_trame d
      ofi.close()
      return t
      
-def SdWriteData(trame):     
+def sdWriteData(trame):     
      f = open('/sd/data', 'a')
      f.write(trame)
      f.close()
      return
      
-def SdReadData():     
-     f = open('/sd/data', 'a')
+def sdReadData():     
+     f = open('/sd/data', 'r')
      t=f.read()
      f.close()
      return t  
@@ -81,11 +95,12 @@ print (' configuration 201 : RX ET TX, ON VA CONFIGURER LE TX; il y a x capteurs
 print (' configuration 206 : RX ET TX, ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 6 capteurs sur le TX; la trame émise fait 37 octets : 2 [label/num trame]+1 [T]+24 [6 long]+10 délimiteurs')
 print (' configuration 306 : RX: ON VA LIRE carte SD; il y a 0 capteur sur le RX; il y a 6 capteurs sur le TX;           la trame SD fait    37 octets ')
 
-configuration = input ("entrez un n° de configuration :") # Choisir une config: 1er chiffre 1->config RX, 2->configTX, 3->lecture EEPROM/TX,  2eme chiffre->nb capteurs RX,  3eme chiffre->nb capteurs sur TX
-configuration=int(configuration)
-carte_sd=input("sauvegarde sur carte SD : ENTRER 1 pour oui ou 0 pour non    ") #1 si on veut sauvegarder sur SD du RX, 0 sinon
-carte_sd=int(carte_sd)
-
+#configuration = input ("entrez un n° de configuration :") # Choisir une config: 1er chiffre 1->config RX, 2->configTX, 3->lecture EEPROM/TX,  2eme chiffre->nb capteurs RX,  3eme chiffre->nb capteurs sur TX
+#configuration=int(configuration)
+configuration=110
+#carte_sd=input("sauvegarde sur carte SD : ENTRER 1 pour oui ou 0 pour non    ") #1 si on veut sauvegarder sur SD du RX, 0 sinon
+#carte_sd=int(carte_sd)
+carte_sd=1
 tempo_lora_demarrage = c.tempo_lora_demarrage    #le temps que la carte lora soit opérationnelle
 tempo_lora_emission = c.tempo_lora_emission           #le temps que la carte lora finisse l'émission
 nombre_point=c.nombre_point                                    #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
@@ -98,47 +113,69 @@ a_max=c.a_max                                                           #afficha
 a=c.a                                                                            #affichage port serie a est le nb  de mesures par ligne, 
 b=c.b                                                                            #b est le nombre total de mesures
 # Init HX711 module, hx.tare(c.HX_TARE), hx.set_scale(c.HX_SCALE)
-capteur_20kg_1 = HX711(c.HX_DT_1, c.HX_SCK_1)     #cf fichier config capteur_20kg_1= HX711('P21', 'P22')#HX711 (DOUT,SCK)           DOUT- pin #P21  et  PD_SCK-  pin #P22 
-#capteur_20kg_2 = HX711(c.HX_DT_2, c.HX_SCK_2)     #capteur_20kg_2= HX711('P1', 'P2')   
+capteur_20kg_1 = HX711(c.HX_DT_1, c.HX_SCK_1)     #cf fichier config capteur_20kg_1= HX711('DOUT,SCK)       
+capteur_20kg_2 = HX711(c.HX_DT_2, c.HX_SCK_2)      
+#capteur_20kg_3 = HX711(c.HX_DT_3, c.HX_SCK_3)      
+#capteur_20kg_4 = HX711(c.HX_DT_4, c.HX_SCK_4)      
+#capteur_20kg_5 = HX711(c.HX_DT_5, c.HX_SCK_5)      
+capteur_20kg_6 = HX711(c.HX_DT_6, c.HX_SCK_6)      
 capteur_20kg = ['capteur_20kg_1','capteur_20kg_2', 'capteur_20kg_3', 'capteur_20kg_4', 'capteur_20kg_5', 'capteur_20kg_6' ]
-delai_avant_acquisition=c.delai_avant_acquisition        #on attend delai avant de lancer les mesures par le HX
+delai_avant_acquisition=c.delai_avant_acquisition       #on attend delai avant de lancer les mesures par le HX
 nombre_capteurs=c.nombre_capteurs                          #nombre de capteurs sur la balance
-tare_20kg =c.tare_20kg                                                 # [-44450,95900,-95950, -95950, -95950, -95950  ]           # tare 20kg_xx : valeur ADC sans rien sur le capteur le 04/04/2017 
-valeur_20kg =c.valeur_20kg                                          #[478650, 613000,408200, 613500, 613500, 613500 ]   # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
-etalon_20kg =c.etalon_20kg                                          # 5202                                                       # etalonnage 20kg_1: poids de l'étalon en grammes
-mesure_20kg=[0, 0, 0, 0, 0, 0]
-lecture_capteur=[0, 0, 0, 0, 0, 0,]
-for i in(0,  nombre_capteurs-1):
-     mesure_20kg[i] = valeur_20kg[i] -tare_20kg[i]         # etalonnage 20kg_1: mesure corrigée de la tare ADC avec l'étalon sur le capteur
-     print("yessss")
+tare_20kg =c.tare_20kg                                                # [-44450,95900,-95950, -95950, -95950, -95950  ]           # tare 20kg_i : valeur ADC sans rien sur le capteur le 04/04/2017 
+valeur_20kg =c.valeur_20kg                                         #[478650, 613000,408200, 613500, 613500, 613500 ]     # etalonnage 20kg_i: valeur ADC avec l'étalon sur le capteur
+etalon_20kg =c.etalon_20kg                                         # 5202                                                                                 # etalonnage 20kg_i :  poids de l'étalon en grammes
+mesure_20kg=c.mesure_20kg
+
 GAIN_distant=c.GAIN_distant                                          #paramètres de mesure de la température : à régler pour chaque Lopy
 OFFSET_distant=c.OFFSET_distant                                  #paramètres de mesure de la température : à régler pour chaque Lopy
-GAIN_local=c.GAIN_local                                                  #paramètres de mesure de la température : à régler pour chaque Lopy
-OFFSET_local=c.OFFSET_local                                          #paramètres de mesure de la température : à régler pour chaque Lopy
+GAIN_local=c.GAIN_local                                                 #paramètres de mesure de la température : à régler pour chaque Lopy
+OFFSET_local=c.OFFSET_local                                         #paramètres de mesure de la température : à régler pour chaque Lopy
 
 temperature_distant=0
 temperature_local=0
 poids_en_grammes=0
 poids_en_gr_distant_total=0
 poids_en_gr_local_total=0
-
+lecture_capteur=[0, 0, 0, 0, 0, 0,]
+i=0
+while i  <  6:
+     mesure_20kg[i] = valeur_20kg[i] -tare_20kg[i]         # etalonnage 20kg_1: mesure corrigée de la tare ADC avec l'étalon sur le capteur
+     i=i+1
 
 
 
 
 if  configuration  in (110, 106, 206, 306):
      print ('ok configuration : ', configuration)
-print ('vu et entendu')
-if configuration ==  110 : # RX seul ON VA CONFIGURER LE RX il y a un capteurs sur le RX; il y a zero capteur sur le TX
-     nombre_capteurs=1
-     for i in (0, 0):
-         lecture_capteur[i]=acquisitionCapteur20kg_1(tare_20kg[i ], mesure_20kg [i],  etalon_20kg , nombre_point )  #fait l'acquisition sur le capteur 20 kg_1 sur une moyenne de nombre_point
-         poids_en_gr_distant=((lecture_capteur[i]-tare_20kg[i])/mesure_20kg[i]*etalon_20kg)
-         print(" n°", i+1, poids_en_gr_distant)
-         poids_en_gr_local_total=poids_en_gr_distant+poids_en_gr_local_total
-     t=temperatureLopy(GAIN_local,OFFSET_local)#mesure de la température du RX***************************************************************************
-     print("poids_en_gr_local_total",poids_en_gr_local_total,"Temperature ", t)
-  
+if configuration ==  110 : # RX seul ON VA CONFIGURER LE RX il y a un capteur sur le RX; il y a zero capteur sur le TX
+     i=0
+#     if carte_sd:
+   #      sd = SD()
+      #   os.mount(sd, '/sd')
+     for i in range (0, 10):
+         indice_capteur=5#attention la liste démarre à 0, le capteur _x a un indice x-1
+         lecture_capteur[indice_capteur]=acquisitionCapteur20kg_6(tare_20kg[indice_capteur ], mesure_20kg [indice_capteur],  etalon_20kg , nombre_point )  #fait l'acquisition sur le capteur 20 kg_indice_capteur sur une moyenne de nombre_point
+         poids_en_gr=((lecture_capteur[indice_capteur]-tare_20kg[indice_capteur])/mesure_20kg[indice_capteur]*etalon_20kg)
+         poids_en_gr_local_total=poids_en_gr+poids_en_gr_local_total
+         t=temperatureLopy(GAIN_local,OFFSET_local)#mesure de la température du RX***************************************************************************
+         print(" n°", indice_capteur+1,"**",lecture_capteur[indice_capteur],"**", poids_en_gr,"poids_en_gr_local_total",poids_en_gr_local_total,"Temperature ", t)
+         trame=delimiteur+str(poids_en_gr)
+         indice_capteur=1#attention la liste démarre à 0, le capteur _x a un indice x-1
+         lecture_capteur[indice_capteur]=acquisitionCapteur20kg_2(tare_20kg[indice_capteur ], mesure_20kg [indice_capteur],  etalon_20kg , nombre_point )  #fait l'acquisition sur le capteur 20 kg_indice_capteur sur une moyenne de nombre_point
+         poids_en_gr=((lecture_capteur[indice_capteur]-tare_20kg[indice_capteur])/mesure_20kg[indice_capteur]*etalon_20kg)
+         poids_en_gr_local_total=poids_en_gr+poids_en_gr_local_total
+         t=temperatureLopy(GAIN_local,OFFSET_local)#mesure de la température du RX***************************************************************************
+         print(" n°", indice_capteur+1,"**",lecture_capteur[indice_capteur],"**", poids_en_gr,"poids_en_gr_local_total",poids_en_gr_local_total,"Temperature ", t)
+         trame=trame+delimiteur+str(poids_en_gr)
+         timestr = time.localtime()#on met un timestamp sur la trame
+         timestr=str(timestr)
+         trame=delimiteur+timestr+trame+("/n")
+         i=i+1
+         if carte_sd:
+             flashWriteData(trame)
+             print(trame)
+         
 
 if configuration== 106: # ON VA CONFIGURER LE RX il y a 0 capteurs sur le RX; il y a six capteurs sur le TX; la trame reçue fait 37 octets : 1 [label] + 1 [numero_trame] +1 [T]+24 [6 long]+10 delimiteur
      octet_par_trame=37
@@ -169,7 +206,7 @@ if configuration== 106: # ON VA CONFIGURER LE RX il y a 0 capteurs sur le RX; il
              if numero_trame - flashReadTrame()>1:          #si la différence est supérieure à 1, il y a des trames perdues
                  print (" perte trames: ",  numero_trame - flashReadTrame())
              if carte_sd and numero_trame - flashReadTrame() :
-                 SdWriteData(trame_ch)     #on sauve la trame sur SD
+                 sdWriteData(trame_ch)     #on sauve la trame sur SD
                  flashWriteTrame ( numero_trame)#on écrit le nouveau numero de trame  
              else :
                  print ("erreur transmission")
@@ -206,10 +243,10 @@ if  configuration == 306 : # RX: ON VA LIRE la carte SD; il y a 0 capteur sur le
      lecture=lecture+1#mode lecture
      time.sleep (5)
      if (lecture==1) :         
-         pass     
-         #FIN DES ELIF      
-print(" trame suivante ")
-
+         sd = SD()
+         os.mount(sd, '/sd')         
+         sdReadData  () 
+           
 print("fin du programme")
 
 
