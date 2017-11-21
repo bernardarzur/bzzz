@@ -81,6 +81,7 @@ BLUE = 0x00007f
 
 
 #deepsleep
+sleep=10
 WPUA_ADDR = (0x09)
 OPTION_REG_ADDR = (0x0E)
 IOCAP_ADDR = (0x1A)

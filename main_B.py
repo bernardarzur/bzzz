@@ -1,4 +1,4 @@
-
+from deepsleep import *
 import pycom
 from network import LoRa
 import socket
@@ -10,7 +10,11 @@ s.setblocking(False)
 
 pycom.heartbeat(False)
 pycom.rgbled(0xaa5500)
-print("jaune")    
+print("jaune")   
+
+
+
+ 
 time.sleep(2)
 ping=('ping'+str(2**24))*10
 while True:
@@ -18,10 +22,13 @@ while True:
     pycom.rgbled(0xff0000)
     print("paquet envoyé",  ping)
     time.sleep(.2)
-    pycom.rgbled(0x000000)         
-    time.sleep(4)
+    pycom.rgbled(0x007700)         
+    time.sleep(10)
+    time.sleep(.2)
     
-    
-    
+    ds = DeepSleep()
+    ds.go_to_sleep(5)  # go to sleep for x seconds    
+    pycom.rgbled(0x000077)         
+    time.sleep(.2)
     
 
