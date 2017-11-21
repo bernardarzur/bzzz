@@ -12,8 +12,7 @@ pycom.heartbeat(False)
 pycom.rgbled(0xaa5500)
 print("jaune")   
 
-ds = DeepSleep()
-ds.go_to_sleep(3)  # go to sleep for x seconds
+
 
  
 time.sleep(2)
@@ -23,10 +22,10 @@ while True:
     pycom.rgbled(0xff0000)
     print("paquet envoyé",  ping)
     time.sleep(.2)
-    pycom.rgbled(0x000000)         
-    time.sleep(4)
+    pycom.rgbled(0x007700)         
+    time.sleep(10)
     
-    
-    
+    ds = DeepSleep()
+    ds.go_to_sleep(5)  # go to sleep for x seconds    
     
 
