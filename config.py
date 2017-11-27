@@ -27,9 +27,9 @@ lecture_capteur=[0, 0, 0, 0, 0, 0,]
 
 delai_avant_acquisition=0.1     #on attend delai avant de lancer les mesures par le HX
 tempo_lora_demarrage = 1      #le temps que la carte lora soit opérationnelle
-tempo_lora_emission = 3          #le temps que la carte lora finisse l'émission
+tempo_lora_emission = 1          #le temps que la carte lora finisse l'émission
 nombre_point=10                     #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-b_mesure_par_cycle = 3           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
+b_mesure_par_cycle = 100           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
 
 label='label'                        #controle expéditeur sur label
 delimiteur='d'                       #delimiteur entre champs de la trame
