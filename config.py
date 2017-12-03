@@ -19,17 +19,18 @@ HX_SCK_5   = 'P19'
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
 HX_SCK_6  = 'P10'
 nombre_capteurs=6                 #nombre de capteurs sur la balance
-tare_20kg = [-44450,95900,-95950, -95950, -95950, -95950  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 04/04/2017 
-valeur_20kg =[478650, 613000,408200, 613500, 613500, 613500 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
+tare_20kg = [43427,95900,-95950, -95950, -95950, -95950  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 03/12/2017 (n°0_B)
+valeur_20kg =[469251, 613000,408200, 613500, 613500, 613500 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
 etalon_20kg = 5202                 # etalonnage 20kg_1: poids de l'étalon en grammes
 mesure_20kg=[0, 0, 0, 0, 0, 0]
 lecture_capteur=[0, 0, 0, 0, 0, 0,]
 
 delai_avant_acquisition=0.1     #on attend delai avant de lancer les mesures par le HX
+delai_local=3     #on attend delai local avant de lancer une mesure
 tempo_lora_demarrage = 1      #le temps que la carte lora soit opérationnelle
 tempo_lora_emission = 1          #le temps que la carte lora finisse l'émission
 nombre_point=10                     #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-b_mesure_par_cycle = 100           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
+b_mesure_par_cycle = 3           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
 
 label='label'                        #controle expéditeur sur label
 delimiteur='d'                       #delimiteur entre champs de la trame
