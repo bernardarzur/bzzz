@@ -70,8 +70,7 @@ class HX711:
         self.allTrue = False
         readbits = ""
 
-
-        return struct.unpack('>i', (b'\0' if dataBits[0] < 128 else b'\xff') + dataBits)[0]
+        return struct.unpack('>i', (b'\0' if dataBits[0] >> 7 == 0 else b'\xff') + dataBits)[0]
 
     def read_average(self, times=3):
         sum = 0
