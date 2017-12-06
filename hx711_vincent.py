@@ -35,23 +35,23 @@ class HX711:
         print('Gain setted to {}'.format(self.GAIN))
 
     def read(self):
-        dataBits = [self.createBoolList(),
-                    self.createBoolList(),
-                    self.createBoolList()]
-
         while not self.is_ready():
             pass
 
-        for j in range(2, -1, -1):
-            for i in range(7, -1, -1):
+        dataBits = b''
+
+        for j in range(0, 3):
+            octet = 0
+            for i in range(0, 8):
                 self.pSCK.value(True)
-                #time.sleep(5e-7)
-                dataBits[j][i] = self.pOUT()
-                #print(self.pOUT())
-                #time.sleep(5e-7)
+                octet <<= 1
+                bitLu = self.pOUt()
+                if bitLu: octet += 1
                 self.pSCK.value(False)
-                #time.sleep(5e-6)
-                #print("Itération")
+
+            dataBits += bytes([octet])
+
+
         # set channel and gain factor for next reading
         for i in range(self.GAIN):
             self.pSCK.value(True)
@@ -67,24 +67,9 @@ class HX711:
             return self.lastVal
         self.allTrue = False
         readbits = ""
-        for j in range(2, -1, -1):
-            if dataBits[j][7] == 0: #positif
-                for i in range(6, -1, -1):
-                    if dataBits[j][i] == 1:
-                        readbits = readbits + '1'
-                    else:
-                        readbits = readbits + '0'
-                self.lastVal = int(readbits, 2)
-            elif dataBits[j][7] == 1: #négatif: complément à 2
-                for i in range(6, -1, -1):
-                    if dataBits[j][i] == 0:
-                        readbits = readbits + '1'
-                    else:
-                        readbits = readbits + '0'
-                self.lastVal = int(readbits, 2) + 1
 
 
-        return self.lastVal
+        return struct.unpack('<i', measure + ('\0' if measure[2] < 128 else '\xff'))
 
     def read_average(self, times=3):
         sum = 0
