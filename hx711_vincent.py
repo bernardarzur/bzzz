@@ -60,7 +60,7 @@ class HX711:
         # check for all 1
         if self.DEBUG:
             print('{}'.format(dataBits))
-        if all(item == 1 for item in dataBits[0]):
+        if dataBits[2] == 0xFF:
             if self.DEBUG:
                 print('all true')
             self.allTrue = True
