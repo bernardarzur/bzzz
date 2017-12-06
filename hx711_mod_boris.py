@@ -135,7 +135,7 @@ class HX711:
         measure = bytearray(self.read_byte() for _ in range(3))
         # we could do endianess conversion in read_byte, but
         # this is better, it converts to native directly
-        struct.unpack('<i', chunk + ('\0' if chunk[2] < 128 else '\xff'))
+        struct.unpack('<i', measure + ('\0' if measure[2] < 128 else '\xff'))
 
     def set_gain(self):#boris
         # set channel and gain factor for next reading
