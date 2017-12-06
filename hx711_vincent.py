@@ -1,5 +1,7 @@
 from machine import Pin
 
+import struct
+
 class HX711:
     def __init__(self, dout, pd_sck, gain=128, debug=False):
         self.pSCK = Pin(pd_sck, mode=Pin.OUT)
