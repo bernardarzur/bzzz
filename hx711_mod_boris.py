@@ -18,7 +18,7 @@ def to_value(v):#boris
 
 
 
-        
+
 """   def read(self):#roberthh https://forum.micropython.org/viewtopic.php?f=16&t=2678&p=23338&hilit=hx711#p21268"""
 """Reading from the board.
         self.power_up()
@@ -40,11 +40,11 @@ def to_value(v):#boris
                 my = ( my << 1) | data
             print("bitbanged: ", my)
             #print("us: ", myus)
-            print("data: ", mydata)        
+            print("data: ", mydata)
             for i in range(3):
                 self.pSCK.value(1)
                 utime.sleep_us(2)
-                self.pSCK.value(0)    
+                self.pSCK.value(0)
         self.power_down()
         time.sleep(2)
         return mydata"""
@@ -135,14 +135,14 @@ class HX711:
         measure = bytearray(self.read_byte() for _ in range(3))
         # we could do endianess conversion in read_byte, but
         # this is better, it converts to native directly
-        return struct.unpack("<BBB", measure)
+        struct.unpack('<i', chunk + ('\0' if chunk[2] < 128 else '\xff'))
 
     def set_gain(self):#boris
         # set channel and gain factor for next reading
         for _ in range(self.GAIN):
             self.pSCK.value(True)
             self.pSCK.value(False)
-    """        
+    """
     def set_gain(self, gain):#source
         if gain is 128:
             self.GAIN = 1
@@ -156,7 +156,7 @@ class HX711:
         print('Gain setted to {}'.format(self.GAIN))
     """
 
-        
+
     def read(self):#boris
         while not self.is_ready(): time.sleep(1e-6) #1 us
 
@@ -165,10 +165,11 @@ class HX711:
             debug_bits(v, 8)
         self.set_gain()
 
-        self.last = to_value(measure)
+        # self.last = to_value(measure)
+        self.last=  measure
         return self.last
-        
-        
+
+
     def createBoolList(size=8):
         ret = []
         for i in range(8):
