@@ -45,7 +45,7 @@ class HX711:
             for i in range(0, 8):
                 self.pSCK.value(True)
                 octet <<= 1
-                bitLu = self.pOut()
+                bitLu = self.pOUT()
                 if bitLu: octet += 1
                 self.pSCK.value(False)
 
