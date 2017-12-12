@@ -1,6 +1,7 @@
 # HX711_1
 # brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#5 volts -MAJ 3 avril 2017
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
+#GND ->P25  et 3.3Volts ->P24
 HX_DT_1    = 'P18'#P18 a P13 sont des INPUT
 HX_SCK_1  = 'P23'
 # HX711_2
@@ -19,9 +20,9 @@ HX_SCK_5   = 'P19'
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
 HX_SCK_6  = 'P10'
 nombre_capteurs=6                 #nombre de capteurs sur la balance
-tare_20kg = [58700,95900,-95950, -95950, -95950, -95950  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 03/12/2017 (n°0_B)
-valeur_20kg =[583000, 613000,408200, 613500, 613500, 613500 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
-etalon_20kg = 5202                 # etalonnage 20kg_1: poids de l'étalon en grammes
+tare_20kg = [-232000,0,69060, -110000, 40470, 72660  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 03/12/2017 (n°0_B)
+valeur_20kg =[437500, 670900,755500, 551000, 719900, 766150 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
+etalon_20kg = 6930                 # etalonnage 20kg_1: poids de l'étalon en grammes
 mesure_20kg=[0, 0, 0, 0, 0, 0]
 lecture_capteur=[0, 0, 0, 0, 0, 0,]
 

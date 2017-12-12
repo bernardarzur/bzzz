@@ -1,5 +1,5 @@
 from machine import Pin
-
+import struct
 
 class HX711:
     def __init__(self, dout, pd_sck, gain=128, debug=False):
@@ -36,41 +36,41 @@ class HX711:
         print('Gain setted to {}'.format(self.GAIN))
 
     def read(self):
-        dataBits = [self.createBoolList(),
-                    self.createBoolList(),
-                    self.createBoolList()]
         while not self.is_ready():
             pass
-        for j in range(2, -1, -1):
-            for i in range(7, -1, -1):
+
+        dataBits = b''
+
+        for j in range(0, 3):
+            octet = 0
+            for i in range(0, 8):
                 self.pSCK.value(True)
-                dataBits[j][i] = self.pOUT()
+                octet <<= 1
+                bitLu = self.pOUT()
+                if bitLu: octet += 1
                 self.pSCK.value(False)
 
-        # set channel and gain factor for next reading
+            dataBits += bytes([octet])
+
+
+        """# set channel and gain factor for next reading
         for i in range(self.GAIN):
             self.pSCK.value(True)
-            self.pSCK.value(False)
+            self.pSCK.value(False)"""
 
         # check for all 1
         if self.DEBUG:
             print('{}'.format(dataBits))
-        if all(item == 1 for item in dataBits[0]):
+        if dataBits[0] == 0xFF:
             if self.DEBUG:
                 print('all true')
             self.allTrue = True
             return self.lastVal
         self.allTrue = False
-        readbits = ""
-        for j in range(2, -1, -1):
-            for i in range(7, -1, -1):
-                if dataBits[j][i] == 1:
-                    readbits = readbits + '1'
-                else:
-                    readbits = readbits + '0'
-        self.lastVal = int(readbits, 2)
-        return self.lastVal
+#        readbits = ""
 
+        return struct.unpack('>i', (b'\0' if dataBits[0] >> 7 == 0 else b'\xff') + dataBits)[0]
+    """
     def read_average(self, times=3):
         sum = 0
         effectiveTimes = 0
@@ -84,7 +84,7 @@ class HX711:
 
         if effectiveTimes == 0:
             return 0
-        return sum / effectiveTimes
+        return sum / i
 
     def get_value(self, times=3):
         return self.read_average(times) - self.OFFSET
@@ -101,7 +101,7 @@ class HX711:
 
     def set_offset(self, offset):
         self.OFFSET = offset
-
+    """
     def power_down(self):
         self.pSCK.value(False)
         self.pSCK.value(True)
