@@ -1,7 +1,5 @@
-# HX711_1
-# brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#5 volts -MAJ 3 avril 2017
+# brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
-#GND ->P25  et 3.3Volts ->P24
 HX_DT_1    = 'P18'#P18 a P13 sont des INPUT
 HX_SCK_1  = 'P23'
 # HX711_2
@@ -18,20 +16,25 @@ HX_DT_5     = 'P13'
 HX_SCK_5   = 'P19'
 # HX711_6
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
-HX_SCK_6  = 'P10'
-nombre_capteurs=6                 #nombre de capteurs sur la balance
-tare_20kg = [-232000,0,69060, -110000, 40470, 72660  ] # tare 20kg_xx : valeur ADC sans rien sur le capteur le 03/12/2017 (n°0_B)
-valeur_20kg =[437500, 670900,755500, 551000, 719900, 766150 ]  # etalonnage 20kg_1: valeur ADC avec l'étalon sur le capteur
-etalon_20kg = 6930                 # etalonnage 20kg_1: poids de l'étalon en grammes
-mesure_20kg=[0, 0, 0, 0, 0, 0]
-lecture_capteur=[0, 0, 0, 0, 0, 0,]
+HX_SCK_6  = 'P8'#P10 pas possible?, sert au deepsleep
+    
+nombre_capteurs=6                 #nombre de capteurs sur la balance, de 1 à 6 dans notre balance n°1
+tare =    [279600,  -232000,             0,  69060, -110000,    40470,   72660,  188850,  72500  ] # tare  : valeur ADC sans rien sur le capteur  
+valeur =[1886000,  437500,   670900,755500,  551000,  719900, 766150,  723000 , 103000 ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
+etalon =[5202,            6930,       6930,    6930,       6930,     6930,     6930,        1550,     5202]               #  poids de l'étalon en grammes
+mesure=   [0]*9
+lecture_capteur=[ 0]*9
+# en position 0 :::        tare_10kg = 279600   lecture du capteur 10kg_leny sans rien dessus le 23/01/2017  etalon_10kg = 5202g    valeur_10kg = 1886000
+# en position 1 à 6 ::: capteurs 20 kg_série_A : mesures du 13 décembre 2017
+# en position 7 :::       tare_30kg = 188850 valeur ADC sans rien le 15/04/2017 etalon_30kg = 1550g    mesure_30kg = 723000 valeur ADC avec l'étalon sur la balance 
+# en position 8 :::        tare_50kg = 72500  sans rien dessus le 23/01/2017 etalon_50kg = 5202   grammes lecture_50kg = 103000
 
 delai_avant_acquisition=0.1     #on attend delai avant de lancer les mesures par le HX
 delai_local=3     #on attend delai local avant de lancer une mesure
 tempo_lora_demarrage = 1      #le temps que la carte lora soit opérationnelle
 tempo_lora_emission = 1          #le temps que la carte lora finisse l'émission
 nombre_point=10                   #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-b_mesure_par_cycle = 3           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
+b_mesure_par_cycle = 1           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
 
 label='label'                        #controle expéditeur sur label
 delimiteur='d'                       #delimiteur entre champs de la trame
