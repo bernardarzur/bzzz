@@ -7,12 +7,12 @@ class HX711:
         self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)
 
         self.DEBUG = debug
-        self.GAIN = 0
+        self.GAIN = 1
         self.OFFSET = 0
         self.SCALE = 1
         self.lastVal = 0
         self.allTrue = False
-        self.set_gain(gain)
+ #       self.set_gain(gain)
 
     def createBoolList(size=8):
         ret = []

@@ -19,6 +19,8 @@ HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI
 HX_SCK_6  = 'P8'#P10 pas possible?, sert au deepsleep
     
 nombre_capteurs=6                 #nombre de capteurs sur la balance, de 1 à 6 dans notre balance n°1
+premier_capteur =1                  #indice du premier capteur
+#indice        0               1             2             3              4             5            6            7             8 
 tare =    [279600,  -232000,             0,  69060, -110000,    40470,   72660,  188850,  72500  ] # tare  : valeur ADC sans rien sur le capteur  
 valeur =[1886000,  437500,   670900,755500,  551000,  719900, 766150,  723000 , 103000 ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
 etalon =[5202,            6930,       6930,    6930,       6930,     6930,     6930,        1550,     5202]               #  poids de l'étalon en grammes
@@ -28,13 +30,13 @@ lecture_capteur=[ 0]*9
 # en position 1 à 6 ::: capteurs 20 kg_série_A : mesures du 13 décembre 2017
 # en position 7 :::       tare_30kg = 188850 valeur ADC sans rien le 15/04/2017 etalon_30kg = 1550g    mesure_30kg = 723000 valeur ADC avec l'étalon sur la balance 
 # en position 8 :::        tare_50kg = 72500  sans rien dessus le 23/01/2017 etalon_50kg = 5202   grammes lecture_50kg = 103000
-
-delai_avant_acquisition=0.1     #on attend delai avant de lancer les mesures par le HX
-delai_local=3     #on attend delai local avant de lancer une mesure
-tempo_lora_demarrage = 1      #le temps que la carte lora soit opérationnelle
-tempo_lora_emission = 1          #le temps que la carte lora finisse l'émission
-nombre_point=10                   #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-b_mesure_par_cycle = 1           #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
+precision=0.01                          #precision souhaitée pour valider l'acquisition d'une mesure
+delai_avant_acquisition=0.1      #on attend delai avant de lancer les mesures par le HX
+delai_local=3                             #on attend delai local avant de lancer une mesure
+tempo_lora_demarrage = 0.1       #le temps que la carte lora soit opérationnelle
+tempo_lora_emission =0.1         #le temps que la carte lora finisse l'émission
+nombre_point=3                        #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
+b_mesure_par_cycle = 1            #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
 
 label='label'                        #controle expéditeur sur label
 delimiteur='d'                       #delimiteur entre champs de la trame
@@ -86,7 +88,7 @@ BLUE = 0x00007f
 
 
 #deepsleep
-sleep=10
+sleep=600
 WPUA_ADDR = (0x09)
 OPTION_REG_ADDR = (0x0E)
 IOCAP_ADDR = (0x1A)
