@@ -5,7 +5,7 @@
 #version tx_rx_v3 : on fait un cycle de mesures sur n points, b fois de suite en envoyant un numéro de trame sauvé sur EEPROM TX (on s'est aperçu qu'on perdait bcp de trames), tx_rx_v_4 : 6 capteurs
 #version tx_rx_v_1.py : on passe en python,v_9 commence à marcher avec un capteur sauf HX711 mode degradé; v_10 hx711 semble marcher après exclusion des valeurs 2**n-1;
 #v_11 : deux capteurs conf 120, v_12 : 6 capteurs RX et TX; v_13 : mauvaise précision sur v_12, on va tester la mesure par rapport à la dernière archivée sur flash TX avec un paramètre de précision;
-v_14 : on allege conf 206, cycle 12 secondes
+v_14 : on allege conf 206, cycle 12 secondes pour pouvoir émettre 20 000 trames avec 2600 mAh *2 (on vise 50000)
 
 print (' Choisir une config: 1er chiffre 1->config RX, 2->configTX, 3->lecture EEPROM/TX,  2eme chiffre->nb capteurs RX,  3eme chiffre->nb capteurs sur TX')
 print (' configuration 101 : RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteur sur le RX; il y a 1 capteur sur le TX')
@@ -14,6 +14,7 @@ print (' configuration 110 : RX seul, ON VA CONFIGURER LE RX; il y a 1 capteur s
 print (' configuration 160 : RX seul, ON VA CONFIGURER LE RX; il y a x capteurs sur le RX; il y a 0 capteurs sur le TX') 
 print (' configuration 206 : RX ET TX, ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a y capteurs sur le TX') 
 print (' configuration 300 : RX: ON VA COPIER la flash; il y a x capteurs sur le RX; il y a y capteurs sur le TX')
+POUR CONFIGURER VOIR LIGNE 113
 """
 import pycom
 import errno
@@ -21,14 +22,31 @@ from hx711 import HX711
 from network import LoRa
 import socket 
 import time
+from machine import RTC
 import config as c
 from deepsleep  import *
 #import machine#on voulait réduire la freq horloge du Lopy à 160 MHz, mais.....
 
+
+
+#############################################################################################################################
+configuration=106
+debug=1
+wake=0
+rtc = RTC()
+rtc.init((2018, 1, 4, 8, 42, 0, 0, 0))
+
+print ('configuration:', configuration,  'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now())
+#############################################################################################################################
+
+
+
 def miseEnSommeil(sleep): #commande mise en sommeil du LOPY via la carte deepsleep
-     ds = DeepSleep()
-     ds.go_to_sleep(sleep)  # go to sleep forsleepx seconds
-     return
+    ds = DeepSleep()
+#    ds.disable_wake_on_fall(['P10','P17', 'P18']) 
+#    ds.disable_wake_on_raise(['P10','P17', 'P18'])
+    ds.go_to_sleep(sleep)  # go to sleep for sleep seconds
+    return
 
 def acquisitionCapteur( capteur) :
      capteur.power_up()#reveille le HX711 n°'capteur'
@@ -88,9 +106,9 @@ def flashReadMeasure() : #on lit les mesures dernière trame dans fichier mesure
 def temperatureLopy(GAIN,OFFSET) :
     t=GAIN+OFFSET#***********************************************************fonction bidon
     return t
-configuration=206
-debug=0
-if debug : print ('configuration : ', configuration,  'debug :  ',  debug)
+    
+
+    
 #machine.freq(160000000)#fréquence du ESP32 à 160MHz
 pycom.heartbeat(False)#arrete clignotement led bleue
 
@@ -122,6 +140,7 @@ capteurs=[capteur_0, capteur_1, capteur_2,capteur_3,capteur_4,capteur_5,capteur_
 
 #Init paramètres capteurs
 nombre_capteurs=c.nombre_capteurs      #nombre de capteurs sur la balance
+premier_capteur  =c.premier_capteur       #dans le config, normalement
 tare =c.tare                                               # tare_i : valeur ADC sans rien sur le capteur
 valeur =c.valeur                                        # etalonnage _i: valeur ADC avec l'étalon sur le capteur
 etalon =c.etalon                                        # etalonnage _i :  poids de l'étalon en grammes
@@ -133,6 +152,7 @@ while i  <=  8:
 
 #init deepsleep
 sleep=c.sleep
+w=str(0)
 
 #init temperature********************************************
 GAIN_distant=c.GAIN_distant                                          #paramètres de mesure de la température : à régler pour chaque Lopy
@@ -153,7 +173,7 @@ liste=[0]*24# liste des valeurs HX711 déclarées "fausses"
 for i in range (24):
     liste[i]=2**i-1
     
-#DEBUT DES DIFFERENTES CONFIGURATIONS
+#####################################################################################################################
 
 if configuration== 101: # ON VA CONFIGURER LE RX il y a 0 capteurs sur le RX; il y a un capteur d'indice i sur le TX; 
     lora = LoRa(mode=LoRa.LORA, frequency=863000000)
@@ -211,7 +231,6 @@ if configuration== 106: # ON VA CONFIGURER LE RX il y a 0 capteurs sur le RX; il
             time.sleep(2)         
             trame = trame_ch.decode('utf-8')#sinon pbs compatibilité avec binaire?
             trame=trame.split(delimiteur) #on vire le delimiteur et on met les data dans une liste        
-            print(trame)    
             lecture_capteur=[0]*9
             poids_en_gr_distant_total=0
             if trame[0] ==label :     #vérification champ 0  pour controle destinataire, et controle champ 1  n° trame pour prendre une seule mesure
@@ -225,14 +244,19 @@ if configuration== 106: # ON VA CONFIGURER LE RX il y a 0 capteurs sur le RX; il
                     print(" n° ",i, ': ',  poids_en_gr)
                 numero_trame  =int(trame[1])
                 trame_flash=int(flashReadTrame())
-                print("poids_en_gr_distant_total", poids_en_gr_distant_total, " Température RX: ", temperature_local, " Température TX: ", temperature_distant, " n° trame: ", numero_trame)
                 if numero_trame - trame_flash>1:          #si la différence est supérieure à 1, il y a des trames perdues
                     print (" perte trames: ",  numero_trame - trame_flash)          
                 if  numero_trame!=trame_flash and transmission:
+                    t=rtc.now()
+                    ts=''
+                    for g in t: 
+                        ts+=str(g)+delimiteur
+                    trame_ch+=ts+'\n'#on ajoute le timestamp
                     flashWriteData(trame_ch)     #on sauve la trame sur flash
                     flashWriteTrame ( (trame[1]))#on écrit le nouveau numero de trame
             else:
-                print ("erreur transmission")
+                print ("erreur transmission")                
+            print("poids_total : g ", poids_en_gr_distant_total, " T RX: ", temperature_local, " T TX: ", temperature_distant, "trame : ", trame_ch)
             time.sleep(1)       
         pycom.rgbled(0x000022)             
         time.sleep(2)       
@@ -283,14 +307,16 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
     lora = LoRa(mode=LoRa.LORA, frequency=863000000)
     s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
     s.setblocking(False)
+    ds = DeepSleep()
+#    if wake : wake_s = ds.get_wake_status()    # get the wake reason and the value of the pins during wake up
+    if debug and wake :
+        print(wake_s)
     while True:
         poids_en_gr_total=b=0
         trame=''
         while b < b_mesure_par_cycle : #on peut faire b mesures pour fiabiliser la mesure et envoyer b mesures par trame
             b+=1
             poids_en_gr=poids_en_gr_total=0
-            nombre_capteurs=c.nombre_capteurs#dans le config, normalement
-            premier_capteur  =c.premier_capteur  #dans le config, normalement
             m=flashReadMeasure()
  #           derniere_mesures = m.decode('utf-8')#sinon pbs compatibilité avec binaire?
             derniere_mesures=m.split(delimiteur) #on vire le delimiteur et on met les data dans une liste    
@@ -300,7 +326,8 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
                 lecture_capteur[i]=j=n= moyenne=0
                 while j < nombre_point and n< nombre_point:
                     lecture_capteur[i]=acquisitionCapteur(capteur)  #fait l'acquisition sur le capteur _i 
-                    if debug: print('capteur n°', i, ' ', lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
+                    if debug: 
+                        print('capteur n°', i, ' ', lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
                     moyenne+=lecture_capteur[i]
                     if abs(lecture_capteur[i] -derniere_mesure)>=precision*abs(derniere_mesure):
                         moyenne-=lecture_capteur[i]                     
@@ -321,19 +348,23 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
                              n+=1
                         j+=1
                 if n>=nombre_point and debug:                     print ('beaucoup d\'erreurs capteur n°', i)
-                if j:                                                 lecture_capteur[i]=moyenne/j
+                if j:                                                
+                    lecture_capteur[i]=moyenne/j
                 poids_en_gr=((lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
-                if debug: print(" n°", i, "b ", b,  poids_en_gr,"  ", lecture_capteur[i] )
+                if debug:
+                    print(" n°", i, "b ", b,  poids_en_gr,"  ", lecture_capteur[i] )
                 poids_en_gr_total=poids_en_gr+poids_en_gr_total
-                trame+=str(lecture_capteur[i])+delimiteur
+                trame+=str(lecture_capteur[i])+delimiteur 
         numero_trame= int(flashReadTrame() )#on lit le n° trame sur flash du TX
         t=temperatureLopy(GAIN_distant,OFFSET_distant)#mesure de la température du TX
+        if wake and debug : w=str(wake_s['wake'])
         flashWriteMeasure(trame)#on stocke la dernière mesure sur le TX
-        trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+trame+"\n"
+        trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame+"\n"        
         if debug: print("poids_en_gr_total", poids_en_gr_total, " Température TX: ", t,  " n° trame: ", numero_trame, '****', trame)
         try:            
             s.send (trame) 
-            if debug: print (trame, '  ', b)             
+            if debug: 
+                print (trame, '  ', b)             
             time.sleep(tempo_lora_emission)                
         except Exception as e:
             if e.errno == errno.EAGAIN:
@@ -341,7 +372,9 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
                 time.sleep(0.5)
         flashWriteTrame (str( numero_trame+1))    #on ecrit le numero de la prochaine trame sur la flash du TX
         flashWriteData(trame)#on sauve les data sur le TX, pour test autonomie
-        miseEnSommeil(sleep) #eteint Lopy  
+        if debug:
+            print ('mise en sommeil')
+        if wake: miseEnSommeil(sleep) #eteint Lopy  
 
 
 if  configuration == 300 : # RX: ON VA TRANSFERER le fichier data de la carte flash; il y a y capteurs sur le RX il y a x capteurs sur le TX;
