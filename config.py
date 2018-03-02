@@ -1,9 +1,9 @@
 # brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
-HX_DT_1    = 'P18'#P18 a P13 sont des INPUT
-HX_SCK_1  = 'P23'
+HX_DT_1    = 'P4'#P18 a P13 sont des INPUT
+HX_SCK_1  = 'P3'
 # HX711_2
-HX_DT_2    = 'P17'
+HX_DT_2    = 'P13'
 HX_SCK_2  = 'P22'
 # HX711_3
 HX_DT_3    = 'P15'#la P16 sert pour tension batterie?
@@ -12,11 +12,11 @@ HX_SCK_3  = 'P21'
 HX_DT_4    = 'P14'
 HX_SCK_4  = 'P20'
 # HX711_5
-HX_DT_5     = 'P13'
-HX_SCK_5   = 'P19'
+HX_DT_5     = 'P12'
+HX_SCK_5   = 'P9'
 # HX711_6
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
-HX_SCK_6  = 'P8'#P10 pas possible?, sert au deepsleep
+HX_SCK_6  = 'P8'#P10, P17, P18 pas possibles?, servent au deepsleep, P19 ne marche pas?(sur le 34b), et P23??
     
 nombre_capteurs=6                 #nombre de capteurs sur la balance, de 1 à 6 dans notre balance n°1
 premier_capteur =1                  #indice du premier capteur
