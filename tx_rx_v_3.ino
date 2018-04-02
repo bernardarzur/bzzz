@@ -1,7 +1,8 @@
 /*version V1 : y a le local capteur et le distant, on peut tester en local (sans lora), on enregistre sur eeprom un des deux capteurs; v2 -> deux capteurs locaux et un distant; v3 -> corrige gros
 bug : il faut faire une pseudo-mesure avant de démarrer, bof, finalement on fait moyenne de 100 mesures, v4-> temperature et label, v5-> deux capteurs dans le distant (poids = somme des deux)
 v6-> on rajoute un capteur local aux deux distants (v5 ne marche plus) puis versions tx_rx_v1: on y met les deux, ainsi que la lecture; version tx_rx_v2 : config 4 capteurs 20kg; 
-version tx_rx_v3 : on fait un cycle de mesures sur n points, b fois de suite en envoyant un numéro de trame sauvé sur EEPROM TX (on s'est aperçu qu'on perdait bcp de trames)
+version tx_rx_v3 : on fait un cycle de mesures sur n points, b fois de suite en envoyant un numéro de trame sauvé sur EEPROM TX (on s'est aperçu qu'on perdait bcp de trames) et en mars 2018, on rajoute
+config 1014 et 2014
     
       case 110 : // RX SEULEMENT PAS DE TX, ON VA CONFIGURER LE RX, UN SEUL CAPTEUR SUR LE RX,
       case 120 : // RX SEULEMENT PAS DE TX, ON VA CONFIGURER LE RX, DEUX CAPTEURS SUR LE RX,
@@ -9,48 +10,66 @@ version tx_rx_v3 : on fait un cycle de mesures sur n points, b fois de suite en 
       case 140 : // RX SEULEMENT PAS DE TX, ON VA CONFIGURER LE RX, quatre CAPTEURS SUR LE RX,
 
       case 101 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a 1 capteurs sur le TX; la trame reçue fait 7 octets  :  2 [label]+1 [T]+4 [1 long]
+      case 1014: // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a 4 capteur sur le TX, on calcule poids total en g et on envoie; la trame envoyée fait 7 octets : 2 [label/num trame]+1 [T]+4 [1 long]
+      case 10145:// RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a 4 capteur sur le TX, on calcule poids total en g et on envoie; la trame envoyée fait 5 octets : 2 [label/num trame]+1 [T]+2 [1 int]
       case 102 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a 2 capteurs sur le TX; la trame reçue fait 11 octets : 2 [label]+1 [T]+8 [2 long]
       case 104 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a 4 capteurs sur le TX; la trame reçue fait 19 octets : 2 [label]+1 [T]+16 [4 long]
       case 112 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 1 capteurs sur le RX; il y a 2 capteurs sur le TX; la trame reçue fait 11 octets : 2 [label]+1 [T]+8 [2 long]
       case 122 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 2 capteurs sur le RX; il y a 2 capteurs sur le TX; la trame reçue fait 11 octets : 2 [label]+1 [T]+8 [2 long]
 
       case 201 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 1 capteurs sur le TX; la trame émise fait 7 octets  : 2 [label]+1 [T]+4 [1* long]
+      case 20115:// RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a un capteur sur le TX; la trame émise fait 5 octets  : 2 [label]+1 [T]+2 [1* int]
+      case 2014: // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 4 capteurs sur le TX mais on ne renvoie que la somme en grammes; la trame reçue fait 7 octets : 2 [label/trame]+1 [T]+4 [1 long]
+      case 20145:// RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 4 capteurs sur le TX mais on ne renvoie que la somme en grammes; la trame reçue fait 5 octets : 2 [label/trame]+1 [T]+2 [1 int]
       case 202 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 2 capteurs sur le TX; la trame émise fait 11 octets : 2 [label]+1 [T]+8 [2 long]
       case 204 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a 4 capteurs sur le TX; la trame émise fait 19 octets : 2 [label]+1 [T]+16 [4 long]
       
-      case 301 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 1 capteurs sur le TX; la trame EEPROM fait 5 octets : 1 [T]+4 [1* long]
-      case 302 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 2 capteurs sur le TX; la trame EEPROM fait 9 octets : 1 [T]+8 [2* long]
-      case 304 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 4 capteurs sur le TX; la trame EEPROM fait 17 octets : 1 [T]+16 [4* long]
-      case 310 : // RX: ON VA LIRE L'EEPROM; il y a 1 capteur sur le RX; il y a 0 capteurs sur le TX; la trame EEPROM fait 4 octets : 4 [1* long]
-      case 312 : // RX: ON VA LIRE L'EEPROM; il y a 1 capteur sur le RX; il y a 2 capteurs sur le TX; la trame EEPROM fait 13 octets : 1 [T]+12 [3* long]
-      case 320 : // RX: ON VA LIRE L'EEPROM; il y a 2 capteur sur le RX; il y a 0 capteurs sur le TX; la trame EEPROM fait 8 octets : 4 [2* long]
-      case 340 : // RX: ON VA LIRE L'EEPROM; il y a 4 capteur sur le RX; il y a 0 capteurs sur le TX; la trame EEPROM fait 16 octets : 4 [4* long]
+      case 301 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 1 capteurs sur le TX; la trame reçue fait  7 octets ; la trame EEPROM fait  5 octets : 1 [T]+4 [1* long]
+      case 30145: // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 1 capteurs sur le TX; la trame reçue fait  5 octets ; la trame EEPROM fait  3 octets : 1 [T]+2 [1* int]
+      case 302 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 2 capteurs sur le TX; la trame reçue fait 11 octets ; la trame EEPROM fait  9 octets : 1 [T]+8 [2* long]
+      case 304 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a 4 capteurs sur le TX; la trame reçue fait 19 octets ; la trame EEPROM fait 17 octets : 1 [T]+16 [4* long]
+      case 310 : // RX: ON VA LIRE L'EEPROM; il y a 1 capteur sur le RX; il y a 0 capteurs sur le TX; il n'y a pas de trame reçue   ; la trame EEPROM fait  4 octets : 4 [1* long]
+      case 312 : // RX: ON VA LIRE L'EEPROM; il y a 1 capteur sur le RX; il y a 2 capteurs sur le TX; il n'y a pas de trame reçue   ; la trame EEPROM fait 13 octets : 1 [T]+12 [3* long]
+      case 320 : // RX: ON VA LIRE L'EEPROM; il y a 2 capteur sur le RX; il y a 0 capteurs sur le TX; il n'y a pas de trame reçue   ; la trame EEPROM fait  8 octets : 4 [2* long]
+      case 340 : // RX: ON VA LIRE L'EEPROM; il y a 4 capteur sur le RX; il y a 0 capteurs sur le TX; il n'y a pas de trame reçue   ; la trame EEPROM fait 16 octets : 4 [4* long]
 */
-int configuration = 104; // Choisir une configuration: 1er chiffre 1->configuration RX, 2->configurationTX, 3->lecture EEPROM/TX       2eme chiffre->nb capteurs RX       3eme chiffre->nb sur TX
-const int eeprom=1;//1 si on veut sauvegarder sur EEPROM du RX, 0 sinon
-const int economiseur=0;//1 si on veut utiliser la carte économiseur (active la fonction miseEnSommeil). ATTENTION pour le RX mettre à ZERO, sinon on rajoute tempo_decharge_capa_eco à la boucle
-long tempo_local=300; //tempo entre deux mesures si capteur local seulement, sinon c'est le distant qui pilote
-const int pin_reed = 9; // commande Relais Reed pour couper l'alimentation du Arduino sur le TX, ou le RX si on est en mode local économe (sans PC)
-const int tempo_decharge_capa_eco = 1000;//temps de décharge de la capa économiseur (mini 300ms)
-const int tempo_lora_demarrage = 1000;//le temps que la carte lora soit opérationnelle
-const int tempo_lora_emission = 3000;//le temps que la carte lora finisse l'émission
-const int   nombre_point=10; //c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-const byte b_mesure_par_cycle = 3;//on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero_trame" sur l'octet 3eme
+int configuration = 10145; //  Choisir une configuration: 1er chiffre 1->configuration RX, 2->configurationTX, 3->lecture EEPROM/TX ** 2eme chiffre->nb capteurs RX ** 3eme chiffre->nb sur TX
+int eeprom=1;              //1 si on veut sauvegarder sur EEPROM du RX, 0 sinon
+int economiseur=0;         //1 si on veut utiliser la carte économiseur (active la fonction miseEnSommeil). ATTENTION pour le RX mettre à ZERO, sinon on rajoute tempo_decharge_capa_eco à la boucle
+byte l=2;                  //nombre d'octets par mesure envoyée sur LoRa, si c'est un long, l=4,  si c'est un entier, l=2 (cas 10145, 20145, et 3015)
+
+long tempo_local=300;      //tempo entre deux mesures si capteur local seulement, sinon c'est le distant qui pilote
+int pin_reed = 9;          // commande Relais Reed pour couper l'alimentation du Arduino sur le TX, ou le RX si on est en mode local économe (sans PC)
+int tempo_decharge_capa_eco = 1000;     //temps de décharge de la capa économiseur (mini 300ms)
+int tempo_lora_demarrage = 1000;        //le temps que la carte lora soit opérationnelle
+int tempo_lora_emission = 3000;         //le temps que la carte lora finisse l'émission
+int nombre_point=10;                    //c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
+byte b_mesure_par_cycle = 3;            //on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero_trame" sur l'octet 3eme
 
 #include "EEPROM.h"
-int EEPROM_LENGTH=1024;// l'adresse de la dernière sauvegarde est sauvée sur les 2 premiers octets de l'EEprom (0 et 1),on peut donc lire/écrire jusqu'à 1022 octets
-int address = 2;//adresse pour sauver une trame de données sur l'eeprom RX, on démarre à 2 pour les ecritures
-int read_addr = 2;//adresse pour lire les données sur eeprom, on démarre à 2 pour les lectures
-byte premier_octet=3;//premier octet de lecture_capteur_1 sur la trame reçue
-const byte l=4;//nombre d'octets par mesure, comme c'est un long, l=4
-const byte octet_par_trame_max=19; //c'est la longueur de trame la plus longue de tous les "cases" programmés, elle sert à programmer les deux tableaux data et data_rcv
-const byte label=1;//controle expéditeur sur deux octets
+int EEPROM_LENGTH=1024;     // l'adresse de la dernière sauvegarde est sauvée sur les 2 premiers octets de l'EEprom (0 et 1),on peut donc lire/écrire jusqu'à 1022 octets
+int address = 2;            //adresse pour sauver une trame de données sur l'eeprom RX, on démarre à 2 pour les ecritures
+int read_addr = 2;          //adresse pour lire les données sur eeprom, on démarre à 2 pour les lectures
+byte premier_octet=3;       //premier octet de lecture_capteur_1 sur la trame reçue
+byte octet_par_trame_max=19; //c'est la longueur de trame la plus longue de tous les "cases" programmés, elle sert à programmer les deux tableaux data et data_rcv
+byte label=1;         //controle expéditeur sur deux octets
 byte numero_trame=0;
 byte octet_par_trame=0;//selon case
 byte lecture=0;//mode sans lecture par défaut
 byte a_max=1;//affichage port serie a est le nb max de mesures par ligne, 
 byte a=1;//affichage port serie a est le nb  de mesures par ligne, 
 byte b=0;//b est le nombre total de mesures
+
+long lecture_capteur_1 = 0;
+long lecture_capteur_2 = 0;
+long lecture_capteur_3 = 0;
+long lecture_capteur_4 = 0;
+byte temperature_distant=0;
+float temperature_local=0;
+float poids_en_grammes=0;        
+float poids_en_gr_total=0; 
+long  poids_en_gr_distant=0;
+int p=0;//permet de ramener la mesure sur deux octets pour réduire mémoire sur EEPROM (l=2 dans ce cas, config 2014)
 
 #include "HX711.h"
 //HX711 capteur_machin  (DOUT, SCK);EXEMPLES : HX711.DOUT- pin #A1  et  HX711.PD_SCK-  pin #A0 ->HX711 capteur_machin(A1, A0)
@@ -95,14 +114,6 @@ const float GAIN_distant=0.80;//paramètres de mesure de la température : à r�
 const float OFFSET_distant=314;//paramètres de mesure de la température : à régler pour chaque Arduino
 const float GAIN_local=1.22;//paramètres de mesure de la température : à régler pour chaque Arduino
 const float OFFSET_local=318;//paramètres de mesure de la température : à régler pour chaque Arduino
-
-long lecture_capteur_1 = 0;
-long lecture_capteur_2 = 0;
-long lecture_capteur_3 = 0;
-long lecture_capteur_4 = 0;
-byte temperature_distant=0;
-float temperature_local=0;
-float poids_en_grammes=0;
 
 #include <SPI.h> //Circuit: SS:   pin 10 // the other you need are controlled by the SPI library):MOSI: pin 11  Handled by SPI.H MISO: pin 12 Handled by SPI.H SCK:  pin 13 Handled by SPI.H
 const int CS = 10; // SS already defined by SPI conflicts with same pin nr 10 :)//#define SLAVESELECT 10//ss
@@ -178,7 +189,79 @@ void loop() {
            }
       miseEnSommeil(); //eteint Arduino
       break;
-    
+      
+    case 1014 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a quatre capteur sur le TX, on calcule poids total en g et on envoie; la trame reçue fait 7 octets : 2 [label/num trame]+1 [T]+4 [1 long]
+      available = checkifAvailableRXData() ;//on regarde si il y a des paquets LoRa en attente
+      octet_par_trame=7;
+      while (!available){
+        available = checkifAvailableRXData() ;
+        delay (100);
+      }
+      readAvailableRXData(data_rcv , available);
+      if (data_rcv[premier_octet-3]==label) 
+     {//vérification octet premier  pour controle destinataire, et controle n° trame pour prendre une seule mesure
+       transmission=1 ;//transmission déclarée OK
+       lecture_capteur_1        =lectureLong( premier_octet, data_rcv);
+       poids_en_gr_distant=lecture_capteur_1;Serial.print(" n°1 ");Serial.print(poids_en_gr_distant);
+       numero_trame             =data_rcv[premier_octet-2];//octet deuxieme
+       temperature_distant      =(data_rcv[premier_octet-1]/2.5-30);//octet troisieme
+       temperature_local        =temperatureArduino(GAIN_local,OFFSET_local)/2.5-30;
+       Serial.print(" poids en gr distant: ");Serial.print(poids_en_gr_distant);
+       Serial.print(" Température local: ");Serial.print(temperature_local);Serial.print(" Température distant: ");Serial.print(temperature_distant);
+       Serial.print (" n° trame: ");Serial.print(numero_trame); 
+       if   ((numero_trame - (EEPROM.read(1023)))>1)
+          {//si la différence est supérieure à 1, il y a des trames perdues
+            Serial.print (" perte trames: "); Serial.println((data_rcv[1]- (EEPROM.read(1023))));
+          }   
+       if ((eeprom)&&(numero_trame!=EEPROM.read(1023)))
+          { 
+           address=sauverDistant(address, data_rcv,octet_par_trame);//on sauve la température distante & une lecture_capteur sur 5 octets à partir de l'adresse "address" puis 
+           //la fonction sauver met à jour la nouvelle adresse de sauvegarde, que l'on écrit sur les octets 1 et 2   
+           EEPROM.write (1023, numero_trame);//on écrit le nouveau numero de trame   
+          }    
+      }
+          else {
+           Serial.println ("erreur transmission");
+           }
+      miseEnSommeil(); //eteint Arduino
+      break;     
+
+    case 10145 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a quatre capteur sur le TX, on calcule poids total en g et on envoie; la trame reçue fait 5 octets : 2 [label/num trame]+1 [T]+2 [1 int]
+      available = checkifAvailableRXData() ;//on regarde si il y a des paquets LoRa en attente
+      octet_par_trame=5;
+      while (!available){
+        available = checkifAvailableRXData() ;
+        delay (100);
+      }
+      readAvailableRXData(data_rcv , available);
+      if (data_rcv[premier_octet-3]==label) 
+     {//vérification octet premier  pour controle destinataire, et controle n° trame pour prendre une seule mesure
+       transmission=1 ;//transmission déclarée OK
+       lecture_capteur_1        =lectureInt( premier_octet, data_rcv);
+       Serial.print(" poids distant ");Serial.print(lecture_capteur_1);
+       numero_trame             =data_rcv[premier_octet-2];//octet deuxieme
+       temperature_distant      =(data_rcv[premier_octet-1]/2.5-30);//octet troisieme
+       temperature_local        =temperatureArduino(GAIN_local,OFFSET_local)/2.5-30;
+       Serial.print(" poids en gr distant: ");Serial.print(lecture_capteur_1);
+       Serial.print(" Température local: ");Serial.print(temperature_local);Serial.print(" Température distant: ");Serial.print(temperature_distant);
+       Serial.print (" n° trame: ");Serial.print(numero_trame); 
+       if   ((numero_trame - (EEPROM.read(1023)))>1)
+          {//si la différence est supérieure à 1, il y a des trames perdues
+            Serial.print (" perte trames: "); Serial.println((data_rcv[1]- (EEPROM.read(1023))));
+          }   
+       if ((eeprom)&&(numero_trame!=EEPROM.read(1023)))
+          { 
+           address=sauverDistant(address, data_rcv,octet_par_trame);//on sauve la température distante & une lecture_capteur sur 3 octets à partir de l'adresse "address" puis 
+           //la fonction sauver met à jour la nouvelle adresse de sauvegarde, que l'on écrit sur les octets 1 et 2   
+           EEPROM.write (1023, numero_trame);//on écrit le nouveau numero de trame   
+          }        
+      }
+          else {
+           Serial.println ("erreur transmission");
+           }
+      miseEnSommeil(); //eteint Arduino
+      break;     
+
       
     case 102 : // RX ET TX, ON VA CONFIGURER LE RX; il y a 0 capteurs sur le RX; il y a deux capteurs sur le TX; la trame reçue fait 11 octets : 2 [label]+1 [T]+8 [2 long]
       available = checkifAvailableRXData() ;//on regarde si il y a des paquets LoRa en attente
@@ -398,7 +481,7 @@ void loop() {
       //  lecture_capteur_2=acquisitionCapteur30kg(tare_30kg,mesure_30kg,etalon_30kg,nombre_point);//fait l'acquisition sur le capteur 30 kg sur une moyenne de nombre_point
 
         data[0] = label; 
-        data[1] = label; 
+        data[1] = EEPROM.read(1023); //numero trame
         data[2] = temperatureArduino(GAIN_distant,OFFSET_distant);//mesure de la température du TX
         data[3] =  lecture_capteur_1 >> 24; // il faut decomposer lecture_capteur_1  en ses 4 octets pour les passer au shield LoRa
         data[4] = (lecture_capteur_1 >> 16) & 0xFF;
@@ -410,8 +493,91 @@ void loop() {
         delay(tempo_lora_emission);
       miseEnSommeil(); //eteint Arduino
       break; 
+  
+  case 20115 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a un capteur sur le TX; la trame émise fait 5 octets : 2 [label]+1 [T]+2 [1* int]
+        octet_par_trame=5;
+        b+=1;
+        delay(tempo_lora_demarrage);//le temps que la carte LoRa se mette en marche
+        lecture_capteur_1=acquisitionCapteur50kg(tare_50kg,mesure_50kg,etalon_50kg,nombre_point);//fait l'acquisition sur le capteur 50 kg sur une moyenne de nombre_point
+      //  lecture_capteur_2=acquisitionCapteur30kg(tare_30kg,mesure_30kg,etalon_30kg,nombre_point);//fait l'acquisition sur le capteur 30 kg sur une moyenne de nombre_point
+
+        data[0] = label; 
+        data[1] = EEPROM.read(1023); //numero trame
+        data[2] = temperatureArduino(GAIN_distant,OFFSET_distant);//mesure de la température du TX
+        //data[3] =  lecture_capteur_1 >> 24; // il faut decomposer lecture_capteur_1  en ses 4 octets pour les passer au shield LoRa
+        //data[4] = (lecture_capteur_1 >> 16) & 0xFF;
+        data[3] = (lecture_capteur_1 >>  8) & 0xFF;// il faut decomposer lecture_capteur_1  en ses 2 octets pour les passer au shield LoRa
+        data[4] = (lecture_capteur_1      ) & 0xFF; 
+ 
+        arduinoLoraTXWrite (data,octet_par_trame);
+        Serial.print (" T°C :  ");Serial.print (data[2]/2.5-30);Serial.print ("  ");Serial.println (b);
+        delay(tempo_lora_emission);
+      miseEnSommeil(); //eteint Arduino
+      break; 
       
-      case 202 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a deux capteurs sur le TX; la trame émise fait 11 octets : 2 [label]+1 [T]+8 [2 long]
+  case 2014 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a quatre capteurs sur le TX mais on ne renvoie que la somme en grammes; la trame émise fait 7 octets : 2 [label/trame]+1 [T]+4 [1 long]
+        octet_par_trame=7;
+       while (b < b_mesure_par_cycle) 
+       { //on va envoyer b mesures pour savoir pourquoi la première mesure est fausse, sur capteurs 4 & 3 en particulier
+        b+=1;
+        poids_en_gr_total = 0;
+        delay(tempo_lora_demarrage);//le temps que la carte LoRa se mette en marche
+        lecture_capteur_1=acquisitionCapteur20kg_1(tare_20kg_1,mesure_20kg_1,etalon_20kg_1,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_2=acquisitionCapteur20kg_2(tare_20kg_2,mesure_20kg_2,etalon_20kg_2,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_3=acquisitionCapteur20kg_3(tare_20kg_3,mesure_20kg_3,etalon_20kg_3,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_4=acquisitionCapteur20kg_4(tare_20kg_4,mesure_20kg_4,etalon_20kg_4,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        poids_en_gr_total =(lecture_capteur_1-tare_20kg_1)/mesure_20kg_1*etalon_20kg_1+(lecture_capteur_2-tare_20kg_2)/mesure_20kg_2*etalon_20kg_2+(lecture_capteur_3-tare_20kg_3)/mesure_20kg_3*etalon_20kg_3+(lecture_capteur_4-tare_20kg_4)/mesure_20kg_4*etalon_20kg_4;
+        p=abs(poids_en_gr_total);
+        Serial.print (" poids_en_gr_total : ");  Serial.print (poids_en_gr_total);  Serial.print (" poids_int : ");Serial.print (p);
+        data[0] = label; 
+        data[1] = EEPROM.read(1023); //numero trame
+        data[2] = temperatureArduino(GAIN_distant,OFFSET_distant);//mesure de la température du TX
+        data[3] =  p >> 24; // il faut decomposer poids_en_gr_total  en ses 4 octets pour les passer au shield LoRa
+        data[4] = (p >> 16) & 0xFF;
+        data[5] = (p >>  8) & 0xFF;
+        data[6] = (p      ) & 0xFF; 
+        //Serial.print (" data3: ");Serial.print (data[3]);Serial.print (" data4: ");Serial.print (data[4]);Serial.print (" data5: ");Serial.print (data[5]);Serial.print (" data6: ");Serial.print (data[6]);  
+        arduinoLoraTXWrite (data,octet_par_trame);
+        delay(tempo_lora_emission);
+        Serial.print (" T°C: ");Serial.print (data[2]/2.5-30);Serial.print(" numero_trame: ");Serial.print(EEPROM.read(1023));Serial.print (" b: ");Serial.println (b);
+       }
+      EEPROM.write (1023, data[1] + 1);
+      b=0;
+      miseEnSommeil(); //eteint Arduino  
+      break; 
+ 
+  case 20145 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a quatre capteurs sur le TX mais on ne renvoie que la somme en grammes; la trame émise fait 5 octets : 2 [label]+1 [T]+2 [1* int]
+        octet_par_trame=5;
+       while (b < b_mesure_par_cycle) 
+       { //on va envoyer b mesures pour savoir pourquoi la première mesure est fausse, sur capteurs 4 & 3 en particulier
+        b+=1;
+        poids_en_gr_total = 0;
+        delay(tempo_lora_demarrage);//le temps que la carte LoRa se mette en marche
+        lecture_capteur_1=acquisitionCapteur20kg_1(tare_20kg_1,mesure_20kg_1,etalon_20kg_1,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_2=acquisitionCapteur20kg_2(tare_20kg_2,mesure_20kg_2,etalon_20kg_2,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_3=acquisitionCapteur20kg_3(tare_20kg_3,mesure_20kg_3,etalon_20kg_3,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        lecture_capteur_4=acquisitionCapteur20kg_4(tare_20kg_4,mesure_20kg_4,etalon_20kg_4,nombre_point);//fait l'acquisition sur le capteur 20 kg sur une moyenne de nombre_point
+        poids_en_gr_total =(lecture_capteur_1-tare_20kg_1)/mesure_20kg_1*etalon_20kg_1+(lecture_capteur_2-tare_20kg_2)/mesure_20kg_2*etalon_20kg_2+(lecture_capteur_3-tare_20kg_3)/mesure_20kg_3*etalon_20kg_3+(lecture_capteur_4-tare_20kg_4)/mesure_20kg_4*etalon_20kg_4;
+        p=abs(poids_en_gr_total);
+        Serial.print (" poids_en_gr_total : ");  Serial.print (poids_en_gr_total);  Serial.print (" poids_int : ");Serial.print (p);
+        data[0] = label; 
+        data[1] = EEPROM.read(1023); //numero trame
+        data[2] = temperatureArduino(GAIN_distant,OFFSET_distant);//mesure de la température du TX
+        //data[3] =  p >> 24; // il faut decomposer poids_en_gr_total  en ses 4 octets pour les passer au shield LoRa
+        //data[4] = (p >> 16) & 0xFF;
+        data[3] = (p >>  8) & 0xFF;// il faut decomposer p  en ses 2 octets pour les passer au shield LoRa
+        data[4] = (p      ) & 0xFF; 
+        arduinoLoraTXWrite (data,octet_par_trame);
+        delay(tempo_lora_emission);
+        Serial.print (" T°C: ");Serial.print (data[2]/2.5-30);Serial.print(" numero_trame: ");Serial.print(EEPROM.read(1023));Serial.print (" b: ");Serial.println (b);
+       }
+      EEPROM.write (1023, data[1] + 1);
+      b=0;
+      miseEnSommeil(); //eteint Arduino  
+      break;
+ 
+      
+  case 202 : // RX ET TX ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a deux capteurs sur le TX; la trame émise fait 11 octets : 2 [label]+1 [T]+8 [2 long]
         octet_par_trame=11;
         b+=1;
         delay(tempo_lora_demarrage);//le temps que la carte LoRa se mette en marche
@@ -419,7 +585,7 @@ void loop() {
         lecture_capteur_2=acquisitionCapteur30kg(tare_30kg,mesure_30kg,etalon_30kg,nombre_point);//fait l'acquisition sur le capteur 30 kg sur une moyenne de nombre_point
 
         data[0] = label; 
-        data[1] = label; 
+        data[1] = EEPROM.read(1023); //numero trame
         data[2] = temperatureArduino(GAIN_distant,OFFSET_distant);//mesure de la température du TX
         data[3] =  lecture_capteur_1 >> 24; // il faut decomposer lecture_capteur_1  en ses 4 octets pour les passer au shield LoRa
         data[4] = (lecture_capteur_1 >> 16) & 0xFF;
@@ -507,6 +673,33 @@ void loop() {
      }
       break;
 
+      case 30145 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a x capteurs sur le TX; la trame EEPROM fait 3 octets : 1[T]+2 [1* int]
+ //version 7 octets : label, label, temp, capteur-1#octet_3 ->4
+      octet_par_trame=3;
+      lecture=lecture+1;//mode lecture
+      delay (5000);
+      address = adresseCourante();
+         if (lecture==1) {
+           Serial.print("Addresse:");Serial.print(address);
+              if (address+2+octet_par_trame  > EEPROM_LENGTH){
+                 address=1022;
+                 Serial.print("débordement eeprom");
+              }
+           Serial.println("");
+         }
+       while (read_addr < address) {         
+         read_addr =  lectureEeprom(read_addr, buf,octet_par_trame);
+         int j = 0;
+         temperature_distant = buf[j];    Serial.print("temp_TX: ");    Serial.println(temperature_distant);
+         
+         j=j+1;//on décale de un octet
+         long lecture_capteur = buf[j];
+           for (uint8_t i=j;i<l+j;i++) {
+             lecture_capteur |= (long)buf[i] << (8*(l-1) - (8*(i-j)));//on recompose le long en concaténant les l octets
+           }
+       Serial.print("poids en grammes: ");    Serial.println(lecture_capteur);    
+     }
+      break;
       
       case 302 : // RX: ON VA LIRE L'EEPROM; il y a 0 capteur sur le RX; il y a deux capteurs sur le TX; la trame EEPROM fait 9 octets : 1 [T]+8 [2* long]
  //version 11 octets : label, label, temp, capteur-1#octet_3 ->6, capteur_2#octet_7->10 
@@ -550,10 +743,10 @@ void loop() {
       delay (5000);
       address = adresseCourante();
          if (lecture==1) {
-           Serial.print("Adresse: ");Serial.print(address);
+           Serial.print("Adresse ");Serial.print(address);
               if (address+2+octet_par_trame  > EEPROM_LENGTH){
           //       address=1022;
-                 Serial.print(": débordement eeprom ");
+                 Serial.print(": debordement eeprom ");
               }
            Serial.println("");
          }
@@ -698,10 +891,10 @@ void loop() {
       delay (5000);
       address = adresseCourante();
          if (lecture==1) {
-           Serial.print("Addresse:");Serial.print(address);
+           Serial.print("Adresse:");Serial.print(address);
               if (address+2+octet_par_trame  > EEPROM_LENGTH){
            //      address=1022;
-                 Serial.print("débordement eeprom");
+                 Serial.print("debordement eeprom");
               }
            Serial.println("");
    
@@ -882,6 +1075,15 @@ long lectureLong(byte premier_octet, byte data_rcv[4]){//on lit 4 octets avec le
          }
          return lecture_capteur;
 }   
+
+long lectureInt(byte premier_octet, byte data_rcv[4]){//on lit 2 octets avec lesquels on refait un int 
+  
+        int lecture_capteur = data_rcv[premier_octet];
+        for (uint8_t i=premier_octet;i<premier_octet+l;i++) {
+            lecture_capteur |= (int)data_rcv[i] << (8 - (8*(i-premier_octet)));//on recompose le long en concaténant les 2 premiers octets
+         }
+         return lecture_capteur;
+}
 
 int adresseCourante() {//adresse d'une trame EEPROM, On la lit sur les 2 premiers octets EEPROM
   address = EEPROM.read(0);
