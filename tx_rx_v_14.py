@@ -18,13 +18,15 @@ POUR CONFIGURER VOIR LIGNE 113
 """
 import pycom
 import errno
+import os
 from hx711 import HX711
 from network import LoRa
 import socket 
 import time
 from machine import RTC
 import config as c
-from deepsleep  import *
+import machine
+#from deepsleep  import *
 #import machine#on voulait réduire la freq horloge du Lopy à 160 MHz, mais.....
 
 
@@ -34,19 +36,19 @@ configuration=106
 debug=1
 wake=0
 rtc = RTC()
-rtc.init((2018, 1, 4, 8, 42, 0, 0, 0))
+rtc.init((2018, 7, 28, 16, 42, 0, 0, 0))
 
 print ('configuration:', configuration,  'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now())
 #############################################################################################################################
 
 
 
-def miseEnSommeil(sleep): #commande mise en sommeil du LOPY via la carte deepsleep
-    ds = DeepSleep()
+#def miseEnSommeil(sleep): #commande mise en sommeil du LOPY via la carte deepsleep
+   # ds = DeepSleep()
 #    ds.disable_wake_on_fall(['P10','P17', 'P18']) 
 #    ds.disable_wake_on_raise(['P10','P17', 'P18'])
-    ds.go_to_sleep(sleep)  # go to sleep for sleep seconds
-    return
+    #ds.go_to_sleep(sleep)  # go to sleep for sleep seconds
+    #return
 
 def acquisitionCapteur( capteur) :
      capteur.power_up()#reveille le HX711 n°'capteur'
@@ -93,7 +95,9 @@ def flashReadTrame() : #on lit un numero de trame dans le fichier numero_trame
 
 def flashWriteMeasure(mesure,) : #on écrit les mesures dernière trame dans fichier mesure
      ofi=open('fichier_derniere_mesure', 'w')
-     ofi.write(mesure)
+     dispo=os.getfree('/flash')#en cours d'ajout, non testé, vérifie si y a de la place sur flash
+     if dispo > 100:
+        ofi.write(mesure)
      ofi.close()
      return
 
@@ -307,10 +311,6 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
     lora = LoRa(mode=LoRa.LORA, frequency=863000000)
     s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
     s.setblocking(False)
-    ds = DeepSleep()
-#    if wake : wake_s = ds.get_wake_status()    # get the wake reason and the value of the pins during wake up
-    if debug and wake :
-        print(wake_s)
     while True:
         poids_en_gr_total=b=0
         trame=''
@@ -320,7 +320,7 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
             m=flashReadMeasure()
  #           derniere_mesures = m.decode('utf-8')#sinon pbs compatibilité avec binaire?
             derniere_mesures=m.split(delimiteur) #on vire le delimiteur et on met les data dans une liste    
-            for i in range(premier_capteur, nombre_capteurs+1):#on fait la mesure sur les 6 capteur_i de 1 à 6
+            for i in range(premier_capteur, nombre_capteurs+1):#on fait la mesure sur les i capteur_i de premier_capteur à nombre_capteurs+1
                 capteur=capteurs[i]
                 derniere_mesure=float(derniere_mesures[i-premier_capteur])#démarre à indice= zéro
                 lecture_capteur[i]=j=n= moyenne=0
@@ -357,7 +357,6 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
                 trame+=str(lecture_capteur[i])+delimiteur 
         numero_trame= int(flashReadTrame() )#on lit le n° trame sur flash du TX
         t=temperatureLopy(GAIN_distant,OFFSET_distant)#mesure de la température du TX
-        if wake and debug : w=str(wake_s['wake'])
         flashWriteMeasure(trame)#on stocke la dernière mesure sur le TX
         trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame+"\n"        
         if debug: print("poids_en_gr_total", poids_en_gr_total, " Température TX: ", t,  " n° trame: ", numero_trame, '****', trame)
@@ -371,14 +370,9 @@ if configuration== 206: # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il 
                 if debug: print('cannot send just yet, waiting...  ', b)                  
                 time.sleep(0.5)
         flashWriteTrame (str( numero_trame+1))    #on ecrit le numero de la prochaine trame sur la flash du TX
-        flashWriteData(trame)#on sauve les data sur le TX, pour test autonomie
-        if debug:
-            print ('mise en sommeil')
-        if wake: miseEnSommeil(sleep) #eteint Lopy  
+        if debug: flashWriteData(trame)#on sauve les data sur le TX, pour test autonomie
+        if wake: machine.deepsleep(sleep) #eteint Lopy  
 
 
-if  configuration == 300 : # RX: ON VA TRANSFERER le fichier data de la carte flash; il y a y capteurs sur le RX il y a x capteurs sur le TX;
-    copyStoredData ('fichier_data', '/pc/repertoire/fichier_data')    #marche pas, faut passer par wifi ou ampy
-    print (d)
 
 print('FIN')

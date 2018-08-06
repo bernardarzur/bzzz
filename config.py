@@ -12,11 +12,11 @@ HX_SCK_3  = 'P21'
 HX_DT_4    = 'P14'
 HX_SCK_4  = 'P20'
 # HX711_5
-HX_DT_5     = 'P12'
+HX_DT_5     = 'P23'
 HX_SCK_5   = 'P9'
 # HX711_6
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
-HX_SCK_6  = 'P8'#P10, P17, P18 pas possibles?, servent au deepsleep, P19 ne marche pas?(sur le 34b), et P23??
+HX_SCK_6  = 'P8'#P10, P17, P18 pas possibles?, servent au deepsleep, P23 ne marche pas?(sur le 34b), ne pas utiliser P12 qui sert pour les reboots 
     
 nombre_capteurs=6                 #nombre de capteurs sur la balance, de 1 à 6 dans notre balance n°1
 premier_capteur =1                  #indice du premier capteur
@@ -88,15 +88,13 @@ BLUE = 0x00007f
 
 
 #deepsleep
-sleep=600
+sleep=600000
 WPUA_ADDR = (0x09)
 OPTION_REG_ADDR = (0x0E)
 IOCAP_ADDR = (0x1A)
 IOCAN_ADDR = (0x1B)
-
 WAKE_STATUS_ADDR = (0x40)
 MIN_BAT_ADDR = (0x41)
 SLEEP_TIME_ADDR = (0x42)
 CTRL_0_ADDR = (0x45)
-
 EXP_RTC_PERIOD = (7000)
