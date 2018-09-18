@@ -1,3 +1,11 @@
+# configuration 1 : RX ET TX, ON VA CONFIGURER LE RX; il y a x capteurs sur le RX; il y a y capteurs sur le TX
+# configuration 2 : RX ET TX, ON VA CONFIGURER LE TX; il y a x capteurs sur le RX; il y a y capteurs sur le TX
+configuration=2
+debug=1
+wake=1                                                           # pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1
+date=[2018, 9,  7, 11, 10, 0, 0, 0]
+timeout=300000
+delai_local=10                            #on attend delai local SECONDES avant de lancer une mesure
 # brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
 HX_DT_1    = 'P4'#P18 a P13 sont des INPUT
@@ -17,9 +25,12 @@ HX_SCK_5   = 'P9'
 # HX711_6
 HX_DT_6    = 'P11'#P10 sert aussi a SPIO CLK et P11 a SPIO MOSI 
 HX_SCK_6  = 'P8'#P10, P17, P18 pas possibles?, servent au deepsleep, P23 ne marche pas?(sur le 34b), ne pas utiliser P12 qui sert pour les reboots 
-    
-nombre_capteurs=6                 #nombre de capteurs sur la balance, de 1 à 6 dans notre balance n°1
-premier_capteur =1                  #indice du premier capteur
+
+nombre_capteurs_rx=0                #nombre de capteurs sur la balance RX, de 1 à 6 dans notre balance n°1
+premier_capteur_rx=0                 #indice du premier capteur TX
+
+nombre_capteurs=6                     #nombre de capteurs sur la balance TX, de 1 à 6 dans notre balance n°1
+premier_capteur =1                      #indice du premier capteur TX
 #indice        0               1             2             3              4             5            6            7             8 
 tare =    [279600,  -232000,             0,  69060, -110000,    40470,   72660,  188850,  72500  ] # tare  : valeur ADC sans rien sur le capteur  
 valeur =[1886000,  437500,   670900,755500,  551000,  719900, 766150,  723000 , 103000 ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
@@ -32,28 +43,18 @@ lecture_capteur=[ 0]*9
 # en position 8 :::        tare_50kg = 72500  sans rien dessus le 23/01/2017 etalon_50kg = 5202   grammes lecture_50kg = 103000
 precision=0.01                          #precision souhaitée pour valider l'acquisition d'une mesure
 delai_avant_acquisition=0.1      #on attend delai avant de lancer les mesures par le HX
-delai_local=3                             #on attend delai local avant de lancer une mesure
-tempo_lora_demarrage = 0.1       #le temps que la carte lora soit opérationnelle
+tempo_lora_demarrage = 0.1    #le temps que la carte lora soit opérationnelle
 tempo_lora_emission =0.1         #le temps que la carte lora finisse l'émission
 nombre_point=3                        #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-b_mesure_par_cycle = 1            #on fait "b_mesure_par_cycle"  mesures et on envoie "b_mesure_par_cycle" trames avec le même n° "numero de trame" sur le champ numero_trame
 
-label='label'                        #controle expéditeur sur label
-delimiteur='d'                       #delimiteur entre champs de la trame
-numero_trame=0                    #controle expéditeur sur n° trame
-lecture=0                                #mode sans lecture par défaut
-a_max=1                                 #affichage port serie a est le nb max de mesures par ligne, 
-a=1                                          #affichage port serie a est le nb  de mesures par ligne, 
-b=0                                          #b est le nombre total de mesures
+w='ruche_a448'                    #champ réservé usage ultérieur, libre
+label='label'                        #champ de controle expéditeur sur label
+delimiteur='d'                       #champ delimiteur entre champs de la trame, ne pas utiliser d dans les autres champs!!!
 
 GAIN_distant=0.80                                                                  #paramètres de mesure de la température : à régler pour chaque Arduino
 OFFSET_distant=314                                                               #paramètres de mesure de la température : à régler pour chaque Arduino
 GAIN_local=1.22                                                                      #paramètres de mesure de la température : à régler pour chaque Arduino
 OFFSET_local=318                                                                   #paramètres de mesure de la température : à régler pour chaque Arduino
-
-
-
-
 
 # TTN Node IDs
 DEV_EUI = '70B3D5499390A31C'
@@ -65,14 +66,10 @@ DEBUG_LED = True
 DEBUG_CON = True
 
 # LoRa setup
-LORA_FREQUENCY = 868100000
+LORA_FREQUENCY = 863000000
 LORA_DR = 5   # DR_5
-
-# Prefix of each packet
-PKT_PREFIX = b'W '
-
-# Sleep time in packet send
-SLEEP_MAIN = 60
+PKT_PREFIX = b'W '   # Prefix of each packet
+SLEEP_MAIN = 60        # Sleep time in packet send
 
 # Low Energy config
 DIS_WIFI = True
@@ -86,15 +83,6 @@ YELLOW = 0x7f7f00
 RED = 0x7f0000
 BLUE = 0x00007f
 
-
-#deepsleep
+#deepsleep en millisecondes
 sleep=600000
-WPUA_ADDR = (0x09)
-OPTION_REG_ADDR = (0x0E)
-IOCAP_ADDR = (0x1A)
-IOCAN_ADDR = (0x1B)
-WAKE_STATUS_ADDR = (0x40)
-MIN_BAT_ADDR = (0x41)
-SLEEP_TIME_ADDR = (0x42)
-CTRL_0_ADDR = (0x45)
-EXP_RTC_PERIOD = (7000)
+
