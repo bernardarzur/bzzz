@@ -18,6 +18,7 @@ import config as c
 import machine
 from machine import WDT
 from machine import RTC
+from machine import Pin
 
 #############################################################################################################################
 configuration=c.configuration                                          
@@ -28,6 +29,16 @@ wake=c.wake                                                           # pas de d
 rtc = RTC()
 rtc.init(c.date)
 #############################################################################################################################
+def alimCapteurs(etat) :# ferme le relais via les sorties 1 et 2
+    relais_alim_1_hx711=Pin(c.sortie_relais_1,  mode=Pin.OUT)  
+    relais_alim_2_hx711=Pin(c.sortie_relais_2, mode=Pin.OUT)     
+    if etat:
+        relais_alim_1_hx711.value(1)#mise en tension relais
+        relais_alim_2_hx711.value(1)
+    else:
+        relais_alim_1_hx711.value(0)#mise hors tension relais
+        relais_alim_2_hx711.value(0)        
+    return
 
 def acquisitionCapteur( capteur) :
      capteur.power_up()#reveille le HX711 n°'capteur'
@@ -46,19 +57,7 @@ def flashReadData() : #on lit data dans fichier data
      ofi=open('fichier_data', 'r')
      t=ofi.read()
      ofi.close()
-     return t
-     
-def copyStoredData(source, destination) : #on copie data sur le pc , niet faut passer par wifi? ampy?
-     s=open(source, 'r')    
-     d=open(destination, 'w')
-     while True:
-         l=s.readline()
-         if l=='':
-             break
-         d.write(l)
-     s.close()
-     d.close()
-     return 
+     return t   
 
 def flashWriteTrame(numero_trame) : #on écrit numero de trame dans fichier numero trame
      ofi=open('fichier_numero_trame', 'w')
@@ -91,8 +90,9 @@ def temperatureLopy(GAIN,OFFSET) :
     return t
 ######################################DEBUT PROGRAMME#########################################################################
     
-pycom.heartbeat(False)#arrete clignotement led bleue
-wdt = WDT(timeout=c.timeout)  # enable  watchgdog with a timeout of c.timeout milliseconds
+pycom.heartbeat(False)
+pycom.rgbled(c.YELLOW)                                           #arrete clignotement led bleue, flash jaune
+wdt = WDT(timeout=c.timeout)                                 # enable  watchgdog with a timeout of c.timeout milliseconds
 
 #Init constantes, selon fichier config.py
 tempo_lora_demarrage = c.tempo_lora_demarrage   #le temps que la carte lora soit opérationnelle
@@ -104,6 +104,7 @@ w=c.w                                                                          #
 delai_avant_acquisition=c.delai_avant_acquisition      #on attend delai avant de lancer les mesures par le HX
 delai_local=c.delai_local                                               #on attend delai local avant de lancer une mesure
 precision=c.precision                                                   #precision souhaitée pour valider l'acquisition d'une mesure
+
 # Init HX711 module, hx.tare(c.HX_TARE), hx.set_scale(c.HX_SCALE)#cf fichier config capteur_i= HX711(DOUT,SCK)
 capteur_0 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 10kg
 capteur_7 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 30kg
@@ -117,7 +118,6 @@ capteur_6 = HX711(c.HX_DT_6, c.HX_SCK_6)     #capteur 20kg_i
 capteurs=[capteur_0, capteur_1, capteur_2,capteur_3,capteur_4,capteur_5,capteur_6,capteur_7, capteur_8 ]
 
 #Init paramètres capteurs
-
 tare =c.tare                                               # tare_i : valeur ADC sans rien sur le capteur
 valeur =c.valeur                                        # etalonnage _i: valeur ADC avec l'étalon sur le capteur
 etalon =c.etalon                                        # etalonnage _i :  poids de l'étalon en grammes
@@ -144,13 +144,12 @@ poids_en_gr_distant_total=0
 poids_en_gr_local_total=0
 lecture_capteur=[0]*9
 
-liste=[0]*24# liste des valeurs HX711 déclarées "fausses"
+liste=[0]*24                                                                    # liste des valeurs HX711 déclarées "fausses"
 for i in range (24):
     liste[i]=2**i-1
     
 #####################################################################################################################
 print ('configuration:', configuration,  'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now(), 'premier_capteur_TX', c.premier_capteur, 'nombre_capteurs_TX', c.nombre_capteurs, 'premier_capteur_RX', c.premier_capteur_rx, 'nombre_capteurs_RX', c.nombre_capteurs_rx)
-  
 
 if configuration== 1: # ON VA écouter le TX et lire le RX, il y a  nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX;   
 #trame enregistrée=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+{delimiteur+str(lecture_capteur[i])}*nb_capteurs+delimiteur+time_stamp+delimiteur+"\n"        
@@ -159,23 +158,24 @@ if configuration== 1: # ON VA écouter le TX et lire le RX, il y a  nombre_capte
     s.setblocking(False)
     while True:   
         trame_ch=s.recv(128)     
-        pycom.rgbled(0x002200)             
+        pycom.rgbled(c.vert_pale)             
         time.sleep(2)         
         if trame_ch:      
-            pycom.rgbled(0x660000)            
+            pycom.rgbled(c.rouge_pale)  
+            print( "trame : ", trame_ch)
             time.sleep(2)         
-            trame = trame_ch.decode('utf-8')#sinon pbs compatibilité avec binaire?
-            trame=trame.split(delimiteur) #on vire le delimiteur et on met les data dans une liste        
+            trame = trame_ch.decode('utf-8')                      #sinon pbs compatibilité avec binaire?
+            trame=trame.split(delimiteur)                               #on vire le delimiteur et on met les data dans une liste        
             lecture_capteur=[0]*9
             poids_en_gr_distant_total=0
-            if trame[0] ==label :     #vérification champ 0  pour controle destinataire
+            if trame[0] ==label :                                             #vérification champ 0  pour controle destinataire
                 temperature_distant   =(float(trame[2])/2.5-30)
                 temperature_local       =temperatureLopy(GAIN_local,OFFSET_local)/2.5-30   
-                nombre_capteurs=c.nombre_capteurs      #nombre de capteurs sur la balance TX    
-                premier_capteur  =c.premier_capteur       #premier_capteur  sur la balance TX   
+                nombre_capteurs=c.nombre_capteurs              #nombre de capteurs sur la balance TX    
+                premier_capteur  =c.premier_capteur               #premier_capteur  sur la balance TX   
                 for i in range(premier_capteur, nombre_capteurs+premier_capteur)    :                    
-                    lecture_capteur[i]=float((trame)[i+3])         #trame [0]=label, trame [1]=numéro trame, trame [2]=  température, trame [3]=w      
-                    pycom.rgbled(0x002200)            
+                    lecture_capteur[i]=float((trame)[i+4-premier_capteur])         #trame [0]=label, trame [1]=numéro trame, trame [2]=  température, trame [3]=w      
+                    pycom.rgbled(c.vert_pale)            
                     time.sleep(2) 
                     poids_en_gr=(lecture_capteur[i]-tare[i])/mesure[i]*etalon[i]
                     poids_en_gr_distant_total+=(lecture_capteur[i]-tare[i])/mesure[i]*etalon[i]
@@ -184,18 +184,18 @@ if configuration== 1: # ON VA écouter le TX et lire le RX, il y a  nombre_capte
                 trame_flash=int(flashReadTrame())
                 if abs(numero_trame - trame_flash)>1:          #si la différence est supérieure à 1, il y a des trames perdues
                     print (" perte trames: ",  numero_trame - trame_flash)          
-                t=rtc.now()#on fait un timestamp
+                t=rtc.now()                                                      #on fait un timestamp, le temps  est initialisé dans la config
                 ts=''
                 for g in t: 
                     ts+=str(g)+delimiteur
-                trame_ch+=ts+'\n'#on ajoute le timestamp à la trame reçue
-                flashWriteData(trame_ch)     #on sauve la trame sur flash
-                flashWriteTrame ( (trame[1]))#on écrit le nouveau numero de trame
+                trame_ch+=ts+'\n'                                       #on ajoute le timestamp à la trame reçue
+                flashWriteData(trame_ch)                               #on sauve la trame sur flash
+                flashWriteTrame ( (trame[1]))                        #on écrit le nouveau numero de trame
             else:
                 print ("erreur transmission")                
-            print("poids_total : g ", poids_en_gr_distant_total, " T RX: ", temperature_local, " T TX: ", temperature_distant, "trame : ", trame_ch)
+            print("poids_total : g ", poids_en_gr_distant_total, " T RX: ", temperature_local, " T TX: ", temperature_distant)
             time.sleep(1)       
-        pycom.rgbled(0x000022)             
+        pycom.rgbled(c.bleu_pale)             
         time.sleep(2)  
     
 
@@ -216,14 +216,14 @@ if configuration== 1: # ON VA écouter le TX et lire le RX, il y a  nombre_capte
                     moyenne+=lecture_capteur[i]
                     if lecture_capteur[i] in liste:
                          moyenne-=lecture_capteur[i]                     
-                         print("liste")
+                         print("liste ",  end="")
                          j-=1
                          n+=1
                     j+=1
-                if n>=nombre_point:                     print ('beaucoup d\'erreurs capteur n°', i)
+                if n>=nombre_point:                     print ('beaucoup d\'erreurs capteur n°', i,  end="")
                 if j:                                                 lecture_capteur[i]=moyenne/j
                 poids_en_gr=((lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
-                print(" n°", i, poids_en_gr,"  ", lecture_capteur[i] )
+                print(" n°", i, poids_en_gr,"  ", lecture_capteur[i],  end="" )
                 poids_en_gr_total=poids_en_gr+poids_en_gr_total
                 trame+=delimiteur+str(lecture_capteur[i])
                 i +=1
@@ -234,38 +234,40 @@ if configuration== 1: # ON VA écouter le TX et lire le RX, il y a  nombre_capte
             flashWriteData(trame)
             print("poids_en_gr_total", poids_en_gr_total, " Température RX: ", t,  " n° trame: ", numero_trame, '****', trame)
         time.sleep(delai_local)       
-        wdt.feed() # feeds  watchgdog with a timefeed of c.timefeed milliseconds
+        wdt.feed() # feeds  watchgdog
 
 
 
-if configuration== 2               : # ON VA CONFIGURER LE TX il y a 0 capteur sur le RX; il y a y capteurs sur le TX; 
+if configuration== 2               : # ON VA CONFIGURER LE TX il y a x capteurs sur le RX; il y a y capteurs sur le TX; 
 #trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+{delimiteur+str(lecture_capteur[i])}*nb_capteurs+delimiteur+"\n"        
     lora = LoRa(mode=LoRa.LORA, frequency=c.LORA_FREQUENCY)
     s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
     s.setblocking(False)
     nombre_capteurs=c.nombre_capteurs      #nombre de capteurs sur la balance TX    
-    premier_capteur  =c.premier_capteur       #premier_capteur  sur la balance TX   
-    if debug:
-        pycom.rgbled(0x000022)             
-        time.sleep(2)  
+    premier_capteur  =c.premier_capteur       #premier_capteur  sur la balance TX
+ 
     while True:
-        poids_en_gr_total=b=0
+        alimCapteurs(1)                                         #on alimente les HX711
+        if debug:
+            pycom.rgbled(c.bleu_pale)             
+            time.sleep(2) 
+        poids_en_gr_total=0
         trame=''
         poids_en_gr=poids_en_gr_total=0
         m=flashReadMeasure()
-        derniere_mesures=m.split(delimiteur) #on vire le delimiteur et on met les data dans une liste    
-        for i in range(premier_capteur, nombre_capteurs+1):#on fait la mesure sur les i capteur_i de premier_capteur à nombre_capteurs+1
+        derniere_mesures=m.split(delimiteur)                          #on vire le delimiteur et on met les data dans une liste    
+        for i in range(premier_capteur, nombre_capteurs+1): #on fait la mesure sur les i capteur_i de premier_capteur à nombre_capteurs+1
             capteur=capteurs[i]
             derniere_mesure=float (derniere_mesures[i-premier_capteur])#démarre à indice= zéro
             lecture_capteur[i]=j=n= moyenne=0
             while j < nombre_point and n< nombre_point:
                 lecture_capteur[i]=acquisitionCapteur(capteur)  #fait l'acquisition sur le capteur _i 
                 if debug: 
-                    print('capteur n°', i, ' ', lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
+                    print('capteur n°', i, ' ', capteur,' ** ' , lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i] , end="")
                 moyenne+=lecture_capteur[i]
                 if abs(lecture_capteur[i] -derniere_mesure)>=precision*abs(derniere_mesure):
                     moyenne-=lecture_capteur[i]                     
-                    if debug: print("erreurs")
+                    if debug: print("  erreurs  ", end="")
                     j-=1
                     n+=1
                 j+=1
@@ -273,25 +275,26 @@ if configuration== 2               : # ON VA CONFIGURER LE TX il y a 0 capteur s
                 lecture_capteur[i]=j=n= moyenne=0
                 while j < nombre_point and n< nombre_point:
                     lecture_capteur[i]=acquisitionCapteur(capteur)  #fait l'acquisition sur le capteur _i 
-                    if debug: print('capteur n°', i, ' ', lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
+                    if debug: print(' capteur n°', i, ' ', lecture_capteur[i], 'poids ',  (lecture_capteur[i]-tare[i])/mesure[i]*etalon[i] , end="")
                     moyenne+=lecture_capteur[i]
                     if lecture_capteur[i] in liste:
                          moyenne-=lecture_capteur[i]                     
-                         if debug: print("liste")
+                         if debug: print(" liste", end="")
                          j-=1
                          n+=1
                     j+=1
-            if n>=nombre_point and debug:                     print ('beaucoup d\'erreurs capteur n°', i)
+            if n>=nombre_point and debug:                     print ('  beaucoup d\'erreurs capteur n°', i , end="")
             if j:                                                
                 lecture_capteur[i]=moyenne/j
             poids_en_gr=((lecture_capteur[i]-tare[i])/mesure[i]*etalon[i])
             if debug:
-                print(" n°", i, "b ", b,  poids_en_gr,"  ", lecture_capteur[i] )
+                print(" n°", i,"  ",   poids_en_gr,"  ", lecture_capteur[i] )
             poids_en_gr_total=poids_en_gr+poids_en_gr_total
             trame+=str(lecture_capteur[i])+delimiteur 
-        numero_trame= int(flashReadTrame() )#on lit le n° trame sur flash du TX
-        t=temperatureLopy(GAIN_distant,OFFSET_distant)#mesure de la température du TX
-        flashWriteMeasure(trame)#on stocke la dernière mesure sur le TX
+        alimCapteurs(0)                                                            #on coupe l'alimentation des HX711
+        numero_trame= int(flashReadTrame() )                     #on lit le n° trame sur flash du TX
+        t=temperatureLopy(GAIN_distant,OFFSET_distant)     #mesure de la température du TX
+        flashWriteMeasure(trame)                                           #on stocke la dernière mesure sur le TX
         trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame        
         try:            
             s.send (trame) 
@@ -302,17 +305,20 @@ if configuration== 2               : # ON VA CONFIGURER LE TX il y a 0 capteur s
             if e.errno == errno.EAGAIN:
                 if debug: print('cannot send just yet, waiting...  ', b)                  
                 time.sleep(0.5)
-        flashWriteTrame (str( numero_trame+1))    #on ecrit le numero de la prochaine trame sur la flash du TX
+        flashWriteTrame (str( numero_trame+1))                   #on ecrit le numero de la prochaine trame sur la flash du TX
         if debug:
-            flashWriteData(trame)#on sauve les data sur le TX, pour test autonomie
-            pycom.rgbled(0x660000)             
+            flashWriteData(trame)                                            #on sauve les data sur le TX, pour test autonomie
+            pycom.rgbled(c.rouge_pale)             
             time.sleep(2)           
-            pycom.rgbled(0x002200)             
+            pycom.rgbled(c.vert_pale)             
             print("poids_en_gr_total", poids_en_gr_total, " Température TX: ", t,  " n° trame: ", numero_trame, '****', trame)
-        wdt.feed() # feeds  watchdog 
+        wdt.feed()                                                                  # feeds  watchdog 
         if wake: 
-            machine.deepsleep(sleep) #eteint Lopy
+            pycom.rgbled(c.RED)                                             # flash rouge
+            time.sleep(tempo_lora_emission)                
+            machine.deepsleep(sleep)                                     #eteint Lopy
         else :
+            pycom.rgbled(c.GREEN)
             time.sleep(delai_local)
 
 print('FIN')
