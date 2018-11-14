@@ -99,6 +99,7 @@ orange_pale=0xFF6600
 BLUE = 0x00007f
 bleu_pale=0x000008
 violet=0xFF33CC
+
 #deepsleep en millisecondes
 sleep=600000
 

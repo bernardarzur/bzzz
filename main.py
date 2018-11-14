@@ -255,34 +255,41 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
             capteur=capteurs[i]
             derniere_mesure=float (derniere_mesures[i-premier_capteur])#démarre à indice= zéro
             lecture_capteur[i-premier_capteur]=j=n= moyenne=0
+            capteur.power_up()#reveille le HX711 n°'capteur'
+            time.sleep (delai_avant_acquisition)
+            j=n=moyenne=0
             while j < nombre_point and n< nombre_point:
-                lecture_capteur[i-premier_capteur]=acquisitionCapteur(capteur)  #fait l'acquisition sur le capteur _i 
+                lecture_capteur[i-premier_capteur]=capteur.read()  #fait l'acquisition sur le capteur _i 
                 lecture_capteur[i-premier_capteur]= (lecture_capteur[i-premier_capteur]-tare[i])*coeff[i]
                 if debug: 
                     print('capteur n°', i,  '   poids ',  lecture_capteur[i-premier_capteur], end="")
                     pycom.rgbled(c.jaune_pale)
+                    time.sleep (delai_avant_acquisition)
                 moyenne+=lecture_capteur[i-premier_capteur]
                 if abs(lecture_capteur[i-premier_capteur] -derniere_mesure)>=precision*abs(derniere_mesure):
                     moyenne-=lecture_capteur[i-premier_capteur]                     
                     if debug: 
                         print("  erreurs  ", end="")
-                        pycom.rgbled(c.orange_pale)
+                        pycom.rgbled(c.orange_pale) 
+                        time.sleep (delai_avant_acquisition)
                     j-=1
                     n+=1
                 j+=1
             if n>=nombre_point:           #trop d'erreurs, on refait une deuxième série de mesures
-                lecture_capteur[i-premier_capteur]=j=n= moyenne=0
+                j=n= moyenne=0
                 while j < nombre_point and n< nombre_point:
-                    lecture_capteur[i-premier_capteur]=acquisitionCapteur(capteur)  #fait l'acquisition sur le capteur _i 
+                    lecture_capteur[i-premier_capteur]=capteur.read()  #fait l'acquisition sur le capteur _i 
                     if debug: 
                         print('capteur n°', i,  ' valeur ADC  ',  lecture_capteur[i-premier_capteur], end="")
-                        pycom.rgbled(c.rouge_pale)
+                        pycom.rgbled(c.rouge_pale) 
+                        time.sleep (delai_avant_acquisition)
                     moyenne+=lecture_capteur[i-premier_capteur]
                     if lecture_capteur[i-premier_capteur] in liste:
                         moyenne-=lecture_capteur[i-premier_capteur]                     
                         if debug: 
                             print(" liste  ", end="") 
                             pycom.rgbled(c.RED)
+                            time.sleep (delai_avant_acquisition)
                         j-=1
                         n+=1
                     j+=1
@@ -294,10 +301,10 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
             if debug:
                 print('  capteur n°', i, '   poids ',  lecture_capteur[i-premier_capteur])
                 pycom.rgbled(c.violet)
-                time.sleep(0.5)
+                time.sleep (delai_avant_acquisition)
             poids_en_gr_total+= lecture_capteur[i-premier_capteur]
-            trame+=str( lecture_capteur[i-premier_capteur])+delimiteur 
-        alimCapteurs(0)                                                           #on coupe l'alimentation des HX711
+            trame+=str( lecture_capteur[i-premier_capteur])+delimiteur            
+            capteur.power_down()# put the ADC n° i in sleep mode 
         numero_trame= int(flashReadTrame() )                     #on lit le n° trame sur flash du TX
         t=temperatureLopy(GAIN_distant,OFFSET_distant)     #mesure de la température du TX
         flashWriteMeasure(trame)                                           #on stocke la dernière mesure sur le TX
@@ -321,10 +328,16 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
         wdt.feed()                                                                  # feeds  watchdog 
         if wake: 
             pycom.rgbled(c.RED)                                             # flash rouge
-            time.sleep(tempo_lora_emission)                
+            time.sleep (delai_avant_acquisition)                
             machine.deepsleep(sleep)                                     #eteint Lopy
         else :
+            alimCapteurs(0)                                                           #on coupe l'alimentation des HX711
             pycom.rgbled(c.GREEN)
-            time.sleep(delai_local)
+            time.sleep (delai_local)
+        pycom.rgbled(c.RED)                                             # flash rouge
+        time.sleep(delai_avant_acquisition)
+    pycom.rgbled(c.BLUE)                                             # flash BLEU
+    time.sleep(delai_avant_acquisition)       
+
 
 print('FIN')
