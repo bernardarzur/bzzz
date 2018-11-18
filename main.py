@@ -7,9 +7,8 @@
 #v_13 : mauvaise précision sur v_12, on va tester la mesure par rapport à la dernière archivée sur flash TX avec un paramètre de précision;
 #v_14 : on allege conf 206 ->conf 2, un cycle dure 12 secondes pour pouvoir émettre 20 000 trames avec 2600 mAh *2 (on vise 50000) , on passe au Lopy 4 (suppression du shield deepsleep et donc de deepsleep.py
 #v_15 : on rajoute un chien de garde pour éviter les plantages réguliers (tous les 2/3 jours pour TX, un peu mieux pour RX), on passe tous les paramètres à config
-#v_16 : on transmet le poids et non plus la valeur brute ADC
+#v_16 : on transmet le poids ou bien la valeur brute ADC, selon le choix des capteurs
 import pycom
-import errno
 import os
 from hx711 import HX711
 from network import LoRa
@@ -66,7 +65,7 @@ def flashReadTrame() : #on lit un numero de trame dans le fichier numero_trame
      ofi.close()
      return t
 
-def flashWriteMeasure(mesure,) : #on écrit les mesures dernière trame dans fichier mesure
+def flashWriteMeasure(mesure) : #on écrit les mesures dernière trame dans fichier mesure
      ofi=open('fichier_derniere_mesure', 'w')
      ofi.write(mesure)
      ofi.close()
@@ -109,31 +108,27 @@ nombre_capteurs_rx=c.nombre_capteurs_rx       #nombre de capteurs sur la balance
 premier_capteur_rx=c.premier_capteur_rx          #premier_capteur  sur la balance RX
 # Init HX711 module, hx.tare(c.HX_TARE), hx.set_scale(c.HX_SCALE)#cf fichier config capteur_i= HX711(DOUT,SCK)
 capteur_0 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 10kg
-
 capteur_1 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i     
 capteur_2 = HX711(c.HX_DT_2, c.HX_SCK_2)     #capteur 20kg_i  
 capteur_3 = HX711(c.HX_DT_3, c.HX_SCK_3)     #capteur 20kg_i  
 capteur_4 = HX711(c.HX_DT_4, c.HX_SCK_4)     #capteur 20kg_i  
 capteur_5 = HX711(c.HX_DT_5, c.HX_SCK_5)     #capteur 20kg_i  
 capteur_6 = HX711(c.HX_DT_6, c.HX_SCK_6)     #capteur 20kg_i  
-
 capteur_7 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 30kg
 capteur_8 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 50kg
-
 capteur_9  = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur ADC     
 capteur_10 = HX711(c.HX_DT_2, c.HX_SCK_2)    #capteur ADC  
-capteur_11= HX711(c.HX_DT_3, c.HX_SCK_3)     #capteur ADC  
-capteur_12 = HX711(c.HX_DT_4, c.HX_SCK_4)   #capteur ADC  
-capteur_13= HX711(c.HX_DT_5, c.HX_SCK_5)    #capteur ADC  
-capteur_14= HX711(c.HX_DT_6, c.HX_SCK_6)    #capteur ADC 
+capteur_11 = HX711(c.HX_DT_3, c.HX_SCK_3)    #capteur ADC  
+capteur_12 = HX711(c.HX_DT_4, c.HX_SCK_4)    #capteur ADC  
+capteur_13 = HX711(c.HX_DT_5, c.HX_SCK_5)    #capteur ADC  
+capteur_14 = HX711(c.HX_DT_6, c.HX_SCK_6)    #capteur ADC 
 
 capteurs=[capteur_0,capteur_1,capteur_2,capteur_3,capteur_4,capteur_5,capteur_6,capteur_7,capteur_8,capteur_9,capteur_10,capteur_11,capteur_12,capteur_13,capteur_14]
 
-#Init paramètres capteurs
 tare =c.tare                                                  # tare_i : valeur ADC sans rien sur le capteur
-coeff=c.coeff                                               #coeff multiplicateur pour obtenir des grammes 
-#init deepsleep
-sleep=c.sleep
+coeff=c.coeff                                                #coeff multiplicateur pour obtenir des grammes 
+sleep=c.sleep                                               #init deepsleep
+
 
 #init temperature********************************************ne marche pas
 GAIN_distant=c.GAIN_distant                                          #paramètres de mesure de la température : à régler pour chaque Lopy
@@ -280,7 +275,7 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
                 while j < nombre_point and n< nombre_point:
                     lecture_capteur[i-premier_capteur]=capteur.read()  #fait l'acquisition sur le capteur _i 
                     if debug: 
-                        print('capteur n°', i,  ' valeur ADC  ',  lecture_capteur[i-premier_capteur], end="")
+                        print('  capteur n°', i,  ' valeur ADC  ',  lecture_capteur[i-premier_capteur], end="")
                         pycom.rgbled(c.rouge_pale) 
                         time.sleep (delai_avant_acquisition)
                     moyenne+=lecture_capteur[i-premier_capteur]
@@ -309,15 +304,7 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
         t=temperatureLopy(GAIN_distant,OFFSET_distant)     #mesure de la température du TX
         flashWriteMeasure(trame)                                           #on stocke la dernière mesure sur le TX
         trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame        
-        try:            
-            s.send (trame) 
-            if debug: 
-                print (trame)             
-            time.sleep(tempo_lora_emission)                
-        except Exception as e:
-            if e.errno == errno.EAGAIN:
-                if debug: print('cannot send just yet, waiting...  ', b)                  
-                time.sleep(0.5)
+        s.send (trame) 
         flashWriteTrame (str( numero_trame+1))                   #on ecrit le numero de la prochaine trame sur la flash du TX
         if debug:
             flashWriteData(trame)                                            #on sauve les data sur le TX, si debug
