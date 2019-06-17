@@ -8,6 +8,7 @@
 #v_14 : on allege conf 206 ->conf 2, un cycle dure 12 secondes pour pouvoir émettre 20 000 trames avec 2600 mAh *2 (on vise 50000) , on passe au Lopy 4 (suppression du shield deepsleep et donc de deepsleep.py
 #v_15 : on rajoute un chien de garde pour éviter les plantages réguliers (tous les 2/3 jours pour TX, un peu mieux pour RX), on passe tous les paramètres à config
 #v_16 : on transmet le poids ou bien la valeur brute ADC, selon le choix des capteurs
+#v_17 : on passe au mode lora APB
 import pycom
 import os
 from hx711 import HX711
@@ -18,19 +19,9 @@ import config as c
 import machine
 from machine import WDT
 from machine import RTC
-from machine import Pin
+import errno
 
 #############################################################################################################################
-def alimCapteurs(etat) :# ferme le relais via les sorties 1 et 2
-    relais_alim_1_hx711=Pin(c.sortie_relais_1,  mode=Pin.OUT)  
-    relais_alim_2_hx711=Pin(c.sortie_relais_2, mode=Pin.OUT)     
-    if etat:
-        relais_alim_1_hx711.value(1)#mise en tension relais
-        relais_alim_2_hx711.value(1)
-    else:
-        relais_alim_1_hx711.value(0)#mise hors tension relais
-        relais_alim_2_hx711.value(0)        
-    return
 
 def acquisitionCapteur( capteur) :
      capteur.power_up()#reveille le HX711 n°'capteur'
@@ -85,7 +76,6 @@ def temperatureLopy(GAIN,OFFSET) :
 rtc = RTC()
 rtc.init(c.date)
 pycom.heartbeat(False)
-pycom.rgbled(c.YELLOW)                                           #arrete clignotement led bleue, fait un flash jaune
 wdt = WDT(timeout=c.timeout)                                 # enable  watchgdog with a timeout of c.timeout milliseconds
 
 #Init constantes, selon fichier config.py
@@ -93,8 +83,13 @@ configuration=c.configuration                                     #configuration
 debug=c.debug
 wake=c.wake   # pas de deepsleep wake =0, période d'émission selon delai_local,  mise en sommeil du TX entre deux mesures (deepsleep) -> wake =1, période d'émission égale à sleep + temps de mesure
 
+mode_lora=c.mode_lora                                             #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we also call Raw-LoRa); LoRaWAN mode implements the full LoRaWAN stack for a class A device.
+#It supports both OTAA and ABP connection methods; ABP stands for Authentication By Personalisation. It means that the encryption keys are configured manually on the device and can start sending 
+#frames to the Gateway without needing a 'handshake' procedure to exchange the keys
+data_rate=c. data_rate # set the LoRaWAN data rate
 tempo_lora_demarrage = c.tempo_lora_demarrage   #le temps que la carte lora soit opérationnelle
 tempo_lora_emission = c.tempo_lora_emission          #le temps que la carte lora finisse l'émission
+delai_flash_mise_en_route=c.delai_flash_mise_en_route# durée du _flash_mise_en_route
 nombre_point=c.nombre_point                                   #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
 label=c.label                                                                #controle expéditeur sur label
 delimiteur=c.delimiteur                                               #delimiteur entre champs de la trame
@@ -146,7 +141,7 @@ for i in range (24):
     
 print ('configuration:', configuration,  'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now(), 'premier_capteur_TX', c.premier_capteur, 'nombre_capteurs_TX', c.nombre_capteurs, 'premier_capteur_RX', c.premier_capteur_rx, 'nombre_capteurs_RX', c.nombre_capteurs_rx)
 
-if configuration== 1: # On va écouter le TX et lire le RX si besoin, il y a  nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX;   
+if configuration== 1: # On va écouter le TX et lire le RX si besoin, il y a  nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX;  ne fonctionne qu'en mode LoRa RAW
 #trame enregistrée=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+{delimiteur+str(lecture_capteur[i])}*nb_capteurs+delimiteur+time_stamp+delimiteur+"\n"        
     lora = LoRa(mode=LoRa.LORA, frequency=c.LORA_FREQUENCY)
     s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
@@ -170,7 +165,7 @@ if configuration== 1: # On va écouter le TX et lire le RX si besoin, il y a  no
                     if i >=4:
                         if g!='':
                             poids_en_gr_distant_total+=float(g)
-                    print ("i ", i,"   g ", g, "    poids_en_gr_distant_total ", poids_en_gr_distant_total)
+                    print ("i ", i-3,"   g ", g, "    poids_en_gr_distant_total ", poids_en_gr_distant_total)
                     i+=1
                 pycom.rgbled(c.vert_pale)            
                 time.sleep(2) 
@@ -233,13 +228,39 @@ if configuration== 1: # On va écouter le TX et lire le RX si besoin, il y a  no
 
 
 if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_capteurs capteurs sur le TX; 
-#trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+{delimiteur+str(lecture_capteur[i])}*nombre_capteurs+delimiteur+"\n"        
-    lora = LoRa(mode=LoRa.LORA, frequency=c.LORA_FREQUENCY)
-    s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
-    s.setblocking(False)
- 
+#trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+{delimiteur+str(lecture_capteur[i])}*nombre_capteurs+delimiteur+"\n"
+    
+    
+    if mode_lora== 'RAW'              : # On définit le mode de transmission LoRa, RAW (transmission la plus rapide entre TX et RX propriétaire sans cryptage, 
+    #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
+        lora = LoRa(mode=LoRa.LORA, frequency=c.LORA_FREQUENCY)
+        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
+        s.setblocking(False)
+        
+    if mode_lora== 'APB'              : # On définit le mode de transmission LoRa, RAW (transmission la plus rapide entre TX et RX propriétaire sans cryptage, 
+    #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
+        lora = LoRa(mode=LoRa.LORAWAN, frequency=c.LORA_FREQUENCY)      
+        lora.join(activation=LoRa.ABP, auth=(c.dev_addr,c.nwk_swkey, c.app_swkey))        # join a network using ABP (Activation By Personalization)      
+        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)        # create a LoRa socket        
+        s.setsockopt(socket.SOL_LORA, socket.SO_DR, data_rate)        # set the LoRaWAN data rate
+
+        # (waits for the data to be sent and for the 2 receive windows to expire)
+        s.setblocking(True)                # make the socket blocking
+
+
+    if mode_lora== 'OTAA'              : # On définit le mode de transmission LoRa, RAW (transmission la plus rapide entre TX et RX propriétaire sans cryptage, 
+    #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
+        lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.EU868)
+        lora.join(activation=LoRa.OTAA, auth=(c.app_eui, c.app_key), timeout=0)        # join a network using OTAA (Over the Air Activation)
+
+        while not lora.has_joined():                # wait until the module has joined the network
+            time.sleep(2.5)
+            print('Not yet joined...')
+        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)        # create a LoRa socket
+        s.setsockopt(socket.SOL_LORA, socket.SO_DR, 5)        # set the LoRaWAN data rate
+        s.setblocking(True)        # make the socket blocking       # (waits for the data to be sent and for the 2 receive windows to expire)
+    
     while True:
-        alimCapteurs(1)                                         #on alimente les HX711
         if debug:
             pycom.rgbled(c.bleu_pale)             
         trame=''
@@ -303,28 +324,33 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
         numero_trame= int(flashReadTrame() )                     #on lit le n° trame sur flash du TX
         t=temperatureLopy(GAIN_distant,OFFSET_distant)     #mesure de la température du TX
         flashWriteMeasure(trame)                                           #on stocke la dernière mesure sur le TX
-        trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame        
-        s.send (trame) 
+        trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame 
+        if debug:
+            pycom.rgbled(c.blanc)
+            time.sleep(tempo_lora_demarrage)  
+        try:            
+            s.send (trame) 
+            if debug: 
+                print (trame)             
+            time.sleep(tempo_lora_emission)                
+        except Exception as e:
+            if e.errno == errno.EAGAIN:
+                if debug: print('cannot send just yet, waiting...  ', b)                  
+                time.sleep(0.5)   
+        s.setblocking(False)
         flashWriteTrame (str( numero_trame+1))                   #on ecrit le numero de la prochaine trame sur la flash du TX
+        print("poids_en_gr_total", poids_en_gr_total, " Température TX: ", t,  " n° trame: ", numero_trame, '****', trame)
         if debug:
             flashWriteData(trame)                                            #on sauve les data sur le TX, si debug
             pycom.rgbled(c.vert_pale)             
-            time.sleep(2)           
-            pycom.rgbled(c.blanc)             
-            print("poids_en_gr_total", poids_en_gr_total, " Température TX: ", t,  " n° trame: ", numero_trame, '****', trame)
+            time.sleep(tempo_lora_emission)                      
         wdt.feed()                                                                  # feeds  watchdog 
         if wake: 
-            pycom.rgbled(c.RED)                                             # flash rouge
-            time.sleep (delai_avant_acquisition)                
+            pycom.rgbled(c.RED)                                             # flash rouge            
+            time.sleep (delai_flash_mise_en_route)                
             machine.deepsleep(sleep)                                     #eteint Lopy
         else :
-            alimCapteurs(0)                                                           #on coupe l'alimentation des HX711
             pycom.rgbled(c.GREEN)
-            time.sleep (delai_local)
-        pycom.rgbled(c.RED)                                             # flash rouge
-        time.sleep(delai_avant_acquisition)
-    pycom.rgbled(c.BLUE)                                             # flash BLEU
-    time.sleep(delai_avant_acquisition)       
-
+            time.sleep(delai_local)
 
 print('FIN')
