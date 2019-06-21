@@ -8,7 +8,7 @@
 #v_14 : on allege conf 206 ->conf 2, un cycle dure 12 secondes pour pouvoir émettre 20 000 trames avec 2600 mAh *2 (on vise 50000) , on passe au Lopy 4 (suppression du shield deepsleep et donc de deepsleep.py
 #v_15 : on rajoute un chien de garde pour éviter les plantages réguliers (tous les 2/3 jours pour TX, un peu mieux pour RX), on passe tous les paramètres à config
 #v_16 : on transmet le poids ou bien la valeur brute ADC, selon le choix des capteurs
-#v_17 : on passe au mode lora APB
+#v_17 : on passe au mode lora APB, on modifie hx711
 import pycom
 import os
 from hx711 import HX711
@@ -265,16 +265,13 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
             pycom.rgbled(c.bleu_pale)             
         trame=''
         poids_en_gr=poids_en_gr_total=0
-        m=flashReadMeasure()
-        derniere_mesures=m.split(delimiteur)                          #on vire le delimiteur et on met les data dans une liste    
+
         for i in range(premier_capteur, nombre_capteurs+premier_capteur): #on fait la mesure sur les i capteur_i de premier_capteur à premier_capteur+nombre_capteurs
             capteur=capteurs[i]
-            derniere_mesure=float (derniere_mesures[i-premier_capteur])#démarre à indice= zéro
-            lecture_capteur[i-premier_capteur]=j=n= moyenne=0
+            lecture_capteur[i-premier_capteur]=n= moyenne=0
             capteur.power_up()#reveille le HX711 n°'capteur'
             time.sleep (delai_avant_acquisition)
-            j=n=moyenne=0
-            while j < nombre_point and n< nombre_point:
+            for n in range(0, nombre_point) :
                 lecture_capteur[i-premier_capteur]=capteur.read()  #fait l'acquisition sur le capteur _i 
                 lecture_capteur[i-premier_capteur]= (lecture_capteur[i-premier_capteur]-tare[i])*coeff[i]
                 if debug: 
@@ -282,48 +279,14 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
                     pycom.rgbled(c.jaune_pale)
                     time.sleep (delai_avant_acquisition)
                 moyenne+=lecture_capteur[i-premier_capteur]
-                if abs(lecture_capteur[i-premier_capteur] -derniere_mesure)>=precision*abs(derniere_mesure):
-                    moyenne-=lecture_capteur[i-premier_capteur]                     
-                    if debug: 
-                        print("  erreurs  ", end="")
-                        pycom.rgbled(c.orange_pale) 
-                        time.sleep (delai_avant_acquisition)
-                    j-=1
-                    n+=1
-                j+=1
-            if n>=nombre_point:           #trop d'erreurs, on refait une deuxième série de mesures
-                j=n= moyenne=0
-                while j < nombre_point and n< nombre_point:
-                    lecture_capteur[i-premier_capteur]=capteur.read()  #fait l'acquisition sur le capteur _i 
-                    if debug: 
-                        print('  capteur n°', i,  ' valeur ADC  ',  lecture_capteur[i-premier_capteur], end="")
-                        pycom.rgbled(c.rouge_pale) 
-                        time.sleep (delai_avant_acquisition)
-                    moyenne+=lecture_capteur[i-premier_capteur]
-                    if lecture_capteur[i-premier_capteur] in liste:
-                        moyenne-=lecture_capteur[i-premier_capteur]                     
-                        if debug: 
-                            print(" liste  ", end="") 
-                            pycom.rgbled(c.RED)
-                            time.sleep (delai_avant_acquisition)
-                        j-=1
-                        n+=1
-                    j+=1
-            if n>=nombre_point and debug:                     
-                print ('  beaucoup d\'erreurs capteur n°', i , end="")
-            if j:                                                
-                lecture_capteur[i-premier_capteur]=moyenne/j
-            lecture_capteur[i-premier_capteur]= (lecture_capteur[i-premier_capteur]-tare[i])*coeff[i]
-            if debug:
-                print('  capteur n°', i, '   poids ',  lecture_capteur[i-premier_capteur])
-                pycom.rgbled(c.violet)
-                time.sleep (delai_avant_acquisition)
+                n+=1
+            lecture_capteur[i-premier_capteur]=moyenne/n
             poids_en_gr_total+= lecture_capteur[i-premier_capteur]
             trame+=str( lecture_capteur[i-premier_capteur])+delimiteur            
             capteur.power_down()# put the ADC n° i in sleep mode 
+            i+=1
         numero_trame= int(flashReadTrame() )                     #on lit le n° trame sur flash du TX
         t=temperatureLopy(GAIN_distant,OFFSET_distant)     #mesure de la température du TX
-        flashWriteMeasure(trame)                                           #on stocke la dernière mesure sur le TX
         trame=label+delimiteur+str(numero_trame)+delimiteur+str(t)+delimiteur+w+delimiteur+trame 
         if debug:
             pycom.rgbled(c.blanc)
@@ -335,7 +298,7 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
             time.sleep(tempo_lora_emission)                
         except Exception as e:
             if e.errno == errno.EAGAIN:
-                if debug: print('cannot send just yet, waiting...  ', b)                  
+                if debug: print('cannot send just yet, waiting...  ')                  
                 time.sleep(0.5)   
         s.setblocking(False)
         flashWriteTrame (str( numero_trame+1))                   #on ecrit le numero de la prochaine trame sur la flash du TX

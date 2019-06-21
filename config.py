@@ -2,12 +2,12 @@
 # configuration 1 :  ON VA CONFIGURER LE RX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
 # configuration 2 :  ON VA CONFIGURER LE TX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
 import ubinascii
-
-w='bzz6'                                              #nom de la ruche ou du RX, ou autre identifiant, un seul hx711 connecté sur le capteur 4,Lopy4_5078/Fablab Lannion mesure poids jauge 20kg_x APB
+import struct
+w='bzz3'                                              #nom de la ruche, ou identifiant TTN, Lopy4_6574/Fablab Lannion mesure poids 4 jauges 20kg_1-2-3-4 APB
 configuration=2                                     #normalement positionné à 1, puisqu'on se place au RX pour écouter la ruche en configuration point à point, ne sert pas si on a une gateway TTN à portée   
 debug=0                                                # normalement positionné à 0
 wake=1                                                  # normalement positionné à 1; pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1, ne sert pas pour les RX
-date=[2019, 6, 14 ,9, 50, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+date=[2019, 6, 20 ,8, 50, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
 sleep=600000                                        #deepsleep en millisecondes
 timeout=60000                                      # 60000 millisecondes font une minute
 delai_local=10                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
@@ -32,8 +32,8 @@ HX_SCK_6  = 'P23'
 nombre_capteurs_rx=0                #nombre de capteurs sur la balance RX
 premier_capteur_rx=0                 #indice du premier capteur RX
 
-nombre_capteurs=1                     #nombre de capteurs sur la balance TX, de 1 à 4 dans notre balance n°1
-premier_capteur =4                     #indice du premier capteur TX
+nombre_capteurs=4                     #nombre de capteurs sur la balance TX, de 1 à 4 dans notre balance n°1
+premier_capteur =1                     #indice du premier capteur TX
 #indice        0               1             2             3              4             5            6            7             8          9           10        11        12         13       14         15
 tare =    [279600,  -232000,             0,    40470,   72660,   69060, -110000,   188850,  72500 ,     0     ,     0     ,     0    ,    0     ,    0     ,    0     ,    0      ] # tare  : valeur ADC sans rien sur le capteur  
 valeur =[1886000,  437500,   670900,  719900, 766150, 755500,  551000,  723000 , 103000,    1      ,     1     ,    1     ,    1     ,    1     ,    1     ,    1      ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
@@ -68,14 +68,14 @@ mode_lora='APB'           #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we als
 #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
 LORA_FREQUENCY = 863000000       #parametres RAW
 data_rate=5                                       # set the LoRaWAN data rate DR_5
-dev_eui =( 0x78,0x50,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #30AEA4FFFE785078    à inverser
+dev_eui =( 0x74,0x65,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #30AEA4FFFE786574    à inverser
 #parametres OTAA donnés par TTN
-app_eui = ubinascii.unhexlify(0xBA,0xBE,0x01,0xD0,0x7E,0xD5,0xB3,0x70)# OTAA authentication parameters, à inverser70B3D57ED001BEBA, app_eui commune pour tous les bzzx de TTN (application fablablannionbzz
-app_key = ubinascii.unhexlify(0xB1, 0x55, 0xBE, 0x4A, 0xF4, 0x3A, 0xC0, 0xCD, 0xDD, 0x7B, 0xCA, 0xA7, 0x77, 0x18, 0x0A, 0xCC)
+app_eui = ubinascii.unhexlify('BABE01D07ED5B370')#(0xBA,0xBE,0x01,0xD0,0x7E,0xD5,0xB3,0x70)# OTAA authentication parameters, à inverser70B3D57ED001BEBA, app_eui commune pour tous les bzzx de TTN (application fablablannionbzz
+app_key = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#pas  la bonne, c'est celle de APB .... 0xB1, 0x55, 0xBE, 0x4A, 0xF4, 0x3A, 0xC0, 0xCD, 0xDD, 0x7B, 0xCA, 0xA7, 0x77, 0x18, 0x0A, 0xCC
 #parametres APB donnés par TTN
-dev_addr =ubinascii.unhexlify(0x26011B2D)              #parametres ABP
-nwk_swkey = ubinascii.unhexlify(0x80, 0x48, 0x67, 0xC0, 0xAC, 0x8F, 0x1F, 0xA3, 0x02, 0x53, 0x7D, 0x48, 0xFA, 0xDA, 0xFA, 0x6E)
-app_swkey = ubinascii.unhexlify(0xFE, 0xCE, 0x29, 0xBF, 0x4B, 0x5C, 0x94, 0xC7, 0x48, 0x05, 0xEA, 0xCD, 0xC1, 0xB6, 0x95, 0x97)
+dev_addr = struct.unpack(">l", ubinascii.unhexlify('26011EB8'))[0]#(0x26011EB8)              #parametres ABP 26011EB8
+nwk_swkey = ubinascii.unhexlify('A3BE3D74AF2179FAB9E11CFE07C54687')#(0xA3, 0xBE, 0x3D, 0x74, 0xAF, 0x21, 0x79, 0xFA, 0xB9, 0xE1, 0x1C, 0xFE, 0x07, 0xC5, 0x46, 0x87)#A3BE3D74AF2179FAB9E11CFE07C54687
+app_swkey = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#(0x83, 0x74, 0xD4, 0x71, 0x09, 0x60, 0xE6, 0x42, 0x1B, 0xDC, 0xF1, 0x5F, 0x63, 0x9E, 0x84, 0x11)#8374D4710960E6421BDCF15F639E8411
 
 tempo_lora_demarrage = 0    #le temps en secondes que la carte lora soit opérationnelle
 tempo_lora_emission = 0        #le temps en secondes que la carte lora finisse l'émission
