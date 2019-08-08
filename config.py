@@ -7,11 +7,11 @@ w='bzz3'                                              #nom de la ruche, ou ident
 configuration=2                                     #normalement positionné à 1, puisqu'on se place au RX pour écouter la ruche en configuration point à point, ne sert pas si on a une gateway TTN à portée   
 debug=0                                                # normalement positionné à 0
 wake=1                                                  # normalement positionné à 1; pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1, ne sert pas pour les RX
-date=[2019, 6, 20 ,8, 50, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
-sleep=600000                                        #deepsleep en millisecondes
-timeout=60000                                      # 60000 millisecondes font une minute
+date=[2019, 8,8 ,22, 10, 0, 0, 0]          # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+sleep=60000*10                                     #deepsleep en millisecondes; 60000 millisecondes font une minute
+timeout=60000*1                                   # timeout  en millisecondes ; 60000 millisecondes font une minute
 delai_local=10                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
-delai_flash_mise_en_route=0.1
+delai_flash_mise_en_route=0.04
 
 # brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
@@ -49,10 +49,10 @@ for g in tare:
 # en position 8 :::        tare_50kg = 72500  sans rien dessus le 23/01/2017 etalon_50kg = 5202   grammes lecture_50kg = 103000
 # en position 9 à 14 ::: capteurs ADC, lectures brutes pour étalonnage
 precision=0.01                            #precision souhaitée pour valider l'acquisition d'une mesure
-nombre_point=3                         #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
+nombre_point=5                         #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
 delai_avant_acquisition= 0      #on attend delai secondes avant de lancer les mesures par le HX
 
-label='label'                            #champ de controle expéditeur sur label
+label='label'                            #champ de controle expéditeur sur label pour LORA RAW
 delimiteur='d'                           #champ delimiteur entre champs de la trame, ne pas utiliser d dans les autres champs!!!
 
 GAIN_distant=0.80                                                                  #paramètres de mesure de la température : à régler pour chaque Arduino
@@ -62,7 +62,7 @@ OFFSET_local=318                                                                
 
 
 # LoRa setup: TTN Node IDs 
-mode_lora='APB'           #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we also call Raw-LoRa); LoRaWAN mode implements the full LoRaWAN stack for a class A device.
+mode_lora='RAW'           #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we also call Raw-LoRa); LoRaWAN mode implements the full LoRaWAN stack for a class A device.
 #It supports both OTAA and ABP connection methods; ABP stands for Authentication By Personalisation. It means that the encryption keys are configured manually on the device and can start sending 
 #frames to the Gateway without needing a 'handshake' procedure to exchange the keys;  On définit le mode de transmission LoRa, RAW (transmission la plus rapide entre TX et RX propriétaire sans cryptage, 
 #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
