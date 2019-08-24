@@ -3,18 +3,17 @@
 # configuration 2 :  ON VA CONFIGURER LE TX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
 import ubinascii
 import struct
-w='bzz3'                                              #nom de la ruche, ou identifiant TTN, Lopy4_6574/Fablab Lannion mesure poids 4 jauges 20kg_1-2-3-4 APB
+w='bzz3'                                              #nom de la ruche, ou identifiant TTN, Lopy4_6574, bzz3, proto n°4
 configuration=2                                     #normalement positionné à 1, puisqu'on se place au RX pour écouter la ruche en configuration point à point, ne sert pas si on a une gateway TTN à portée   
-debug=0                                                # normalement positionné à 0
+debug=1                                                # normalement positionné à 0
 wake=1                                                  # normalement positionné à 1; pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1, ne sert pas pour les RX
-date=[2019, 8,8 ,22, 10, 0, 0, 0]          # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+date=[2019, 8,19 ,22, 10, 0, 0, 0]          # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
 sleep=60000*10                                     #deepsleep en millisecondes; 60000 millisecondes font une minute
 timeout=60000*1                                   # timeout  en millisecondes ; 60000 millisecondes font une minute
 delai_local=10                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
 delai_flash_mise_en_route=0.04
 
-# brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
-#brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
+#PROTO n°4 : brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
 HX_DT_1    = 'P15'
 HX_SCK_1  = 'P20'
 HX_DT_2    = 'P14'
@@ -27,12 +26,16 @@ HX_DT_5     = 'P18'
 HX_SCK_5   = 'P23'
 HX_DT_6    = 'P18'
 HX_SCK_6  = 'P23'
-# ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7 : ne pas utiliser,P16 sert pour la batterie,
+# ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7, ne pas utiliser P16 qui sert pour la batterie sur l'expansion board
+pinBatt='P16'# mesure TENSION BATTERIE attenuation = 0 correspond à 1000mV, attn=1  à 3dB attn=2 à 6dB, attn=3 à 12 dB, pont diviseur (115k et 56k) sur expansion board V2.1A, 
+resolutionADC=4096#10 bits sur Lopy1 : 1024,  12 bits sur Lopy4 : 4096
+attn=1
+range=10**(3/20)*1000# 1412 pour 3 dB
+coeff_pont_div=(115+56)/56 *4.19/4.3#facteur correctif mesuré au multimètre : 4.19 pour 4.30 affiché lopy à 4087 digits
 
 nombre_capteurs_rx=0                #nombre de capteurs sur la balance RX
 premier_capteur_rx=0                 #indice du premier capteur RX
-
-nombre_capteurs=4                     #nombre de capteurs sur la balance TX, de 1 à 4 dans notre balance n°1
+nombre_capteurs=4                     #nombre de capteurs sur la balance TX, de 1 à 4 normalement
 premier_capteur =1                     #indice du premier capteur TX
 #indice        0               1             2             3              4             5            6            7             8          9           10        11        12         13       14         15
 tare =    [279600,  -232000,             0,    40470,   72660,   69060, -110000,   188850,  72500 ,     0     ,     0     ,     0    ,    0     ,    0     ,    0     ,    0      ] # tare  : valeur ADC sans rien sur le capteur  
