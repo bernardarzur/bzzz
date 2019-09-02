@@ -59,7 +59,7 @@ def tensionBatterie():
     v=batt.value()
     if v==c.resolutionADC-1:
         v=-1
-    v=int(v*c.range/c.resolutionADC*c.coeff_pont_div)#mV
+    #v=int(v*c.range/c.resolutionADC*c.coeff_pont_div)#mV
     return v
 
 #Init constantes, selon fichier config.py
@@ -84,17 +84,19 @@ capteur_1 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i
 capteur_2 = HX711(c.HX_DT_2, c.HX_SCK_2)     #capteur 20kg_i  
 capteur_3 = HX711(c.HX_DT_3, c.HX_SCK_3)     #capteur 20kg_i  
 capteur_4 = HX711(c.HX_DT_4, c.HX_SCK_4)     #capteur 20kg_i  
-capteur_5 = HX711(c.HX_DT_5, c.HX_SCK_5)     #capteur 20kg_i  
-capteur_6 = HX711(c.HX_DT_6, c.HX_SCK_6)     #capteur 20kg_i  
+capteur_5 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i  
+capteur_6 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i  
 capteur_7 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 30kg
 capteur_8 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 50kg
 capteur_9  = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur ADC     
 capteur_10 = HX711(c.HX_DT_2, c.HX_SCK_2)    #capteur ADC  
 capteur_11 = HX711(c.HX_DT_3, c.HX_SCK_3)    #capteur ADC  
 capteur_12 = HX711(c.HX_DT_4, c.HX_SCK_4)    #capteur ADC  
-capteur_13 = HX711(c.HX_DT_5, c.HX_SCK_5)    #capteur ADC  
-capteur_14 = HX711(c.HX_DT_6, c.HX_SCK_6)    #capteur ADC 
-capteurs=[capteur_0,capteur_1,capteur_2,capteur_3,capteur_4,capteur_5,capteur_6,capteur_7,capteur_8,capteur_9,capteur_10,capteur_11,capteur_12,capteur_13,capteur_14]
+capteur_13 = HX711(c.HX_DT_1, c.HX_SCK_1)    #capteur 20kg_i  
+capteur_14 = HX711(c.HX_DT_2, c.HX_SCK_2)    #capteur 20kg_i 
+capteur_15 = HX711(c.HX_DT_3, c.HX_SCK_3)    #capteur 20kg_i
+capteur_16 = HX711(c.HX_DT_4, c.HX_SCK_4)    #capteur 20kg_i
+capteurs=[capteur_0,capteur_1,capteur_2,capteur_3,capteur_4,capteur_5,capteur_6,capteur_7,capteur_8,capteur_9,capteur_10,capteur_11,capteur_12,capteur_13,capteur_14, capteur_15, capteur_16]
 tare =c.tare                                                  # tare_i : valeur ADC sans rien sur le capteur
 coeff=c.coeff                                                #coeff multiplicateur pour obtenir des grammes 
 sleep=c.sleep                                               #init deepsleep
@@ -110,7 +112,7 @@ pycom.rgbled(c.violet)                                             # flash viole
 time.sleep (c.delai_flash_mise_en_route)
 pycom.rgbled(c.BLACK)
 wdt = WDT(timeout=c.timeout)                                 # enable  watchgdog with a timeout of c.timeout milliseconds    
-print ('configuration: ', configuration,  'mode_lora:  ', mode_lora,'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now(), 'premier_capteur_TX: ', c.premier_capteur, 'nombre_capteurs_TX: ', c.nombre_capteurs, 'premier_capteur_RX: ', c.premier_capteur_rx, 'nombre_capteurs_RX: ', c.nombre_capteurs_rx, 'tension_Batterie : ', tensionBatterie())
+print ('configuration: ', configuration,  'mode_lora:  ', mode_lora,'debug:',  debug, 'mise en sommeil: ', wake,'date: ',   rtc.now(), 'premier_capteur_TX: ', c.premier_capteur, 'nombre_capteurs_TX: ', c.nombre_capteurs, 'premier_capteur_RX: ', c.premier_capteur_rx, 'nombre_capteurs_RX: ', c.nombre_capteurs_rx, 'tension_Batterie digits : ', tensionBatterie())
 if debug:    #permet de recuperer le dev_eui
     wl = WLAN()
     print('dev_eui : ', ubinascii.hexlify(wl.mac())[:6] + 'FFFE' + ubinascii.hexlify(wl.mac())[6:])
@@ -155,7 +157,7 @@ if configuration== 1: # On va écouter le TX  en point à point seulement (la co
             print(trame_ch," poids_total: ", poids_en_gr_distant_total,  " T_RX: ", temperature_local,   " N_T: ", numero_trame, "tension_Batterie : ", v, "batt_local : ",  tensionBatterie())      
         deltaT=time.time()-t0       #si pas de transmission pendant 2 fois le temps de deepsleep, on allume en rouge
         if deltaT> c.sleep*2/1000:
-            pycom.rgbled(c.rouge_pale)
+            pycom.rgbled(c.RED)
         else:
             pycom.rgbled(c.BLACK)            
         time.sleep(c.delai_local)  
@@ -240,7 +242,7 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
                 lecture_capteur[i-premier_capteur]=int( (lecture_capteur[i-premier_capteur]-tare[i])*coeff[i])#calcule le poids en grammes
                 if debug: 
                     print(' capteur n°', i,  '   poids ',  lecture_capteur[i-premier_capteur], end="")
-                    pycom.rgbled(c.jaune_pale)
+                    pycom.rgbled(c.GREEN)
                     time.sleep (c.delai_avant_acquisition)
                 moy[n]=int(lecture_capteur[i-premier_capteur])
                 n+=1
@@ -294,7 +296,5 @@ if configuration== 2               : # ON VA CONFIGURER LE TX, il y a nombre_cap
             machine.deepsleep(c.sleep)                                     #eteint Lopy
         pycom.rgbled(c.BLUE)
         time.sleep (c.delai_flash_mise_en_route)
-    pycom.rgbled(c.YELLOW)
-    time.sleep (c.delai_flash_mise_en_route)
 
 print('FIN')

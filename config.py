@@ -3,42 +3,45 @@
 # configuration 2 :  ON VA CONFIGURER LE TX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
 import ubinascii
 import struct
-w='bzz3'                                              #nom de la ruche, ou identifiant TTN, Lopy4_6574/Fablab Lannion mesure poids 4 jauges 20kg_1-2-3-4 APB
+w='bzz8'                                              #nom de la ruche ou du RX,  circuit PROTO 5 : quatre hx711 (n°13 à 16), Lopy4_4ad8,, attention P18, P17 et P10 ne sont pas cablées sur le lopy
 configuration=2                                     #normalement positionné à 1, puisqu'on se place au RX pour écouter la ruche en configuration point à point, ne sert pas si on a une gateway TTN à portée   
 debug=0                                                # normalement positionné à 0
-wake=1                                                  # normalement positionné à 1; pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1, ne sert pas pour les RX
-date=[2019, 8,8 ,22, 10, 0, 0, 0]          # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
-sleep=60000*10                                     #deepsleep en millisecondes; 60000 millisecondes font une minute
-timeout=60000*1                                   # timeout  en millisecondes ; 60000 millisecondes font une minute
+wake=1                                                 # normalement positionné à 1; si pas de deepsleep wake =0, période d'émission selon delai_local,  deepsleep -> wake =1, période d'émission selon sleepdebug=1, ne sert pas pour les RX
+date=[2019, 9, 2 ,9, 45, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+sleep    =60000*10                                        #deepsleep en millisecondes
+timeout=60000*1                                      # 60000 millisecondes font une minute
 delai_local=10                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
-delai_flash_mise_en_route=0.04
+delai_flash_mise_en_route=0.02
+tempo_lora_demarrage = 0    #le temps en secondes que la carte lora soit opérationnelle
+tempo_lora_emission = 0        #le temps en secondes que la carte lora finisse l'émission
+delai_avant_acquisition= 0      #on attend delai secondes avant de lancer les mesures par le HX  
 
-# brochage HX vers Lopy    pour le 20 kg ->Blanc pin#DOUT, Jaune pin#SCK, Noir   pin#GRND et Rouge pin#3.3volts -MAJ 3 avril 2017#GND ->P25  et 3.3Volts ->P24
 #brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
-HX_DT_1    = 'P15'
-HX_SCK_1  = 'P20'
-HX_DT_2    = 'P14'
-HX_SCK_2  = 'P21'
-HX_DT_3    = 'P17'
-HX_SCK_3  = 'P22'
-HX_DT_4    = 'P18'
-HX_SCK_4  = 'P23'
-HX_DT_5     = 'P18'
-HX_SCK_5   = 'P23'
-HX_DT_6    = 'P18'
-HX_SCK_6  = 'P23'
-# ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7 : ne pas utiliser,P16 sert pour la batterie,
+HX_DT_1    = 'P19'# brochage HX vers Lopy : ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7 : ne pas utiliser, P16 sert pour la batterie,
+HX_SCK_1  = 'P23'
+HX_DT_2    = 'P8'
+HX_SCK_2  = 'P22'
+HX_DT_3    = 'P15'
+HX_SCK_3  = 'P20'
+HX_DT_4    = 'P13'
+HX_SCK_4  = 'P21'
+
+pinBatt='P16'# mesure TENSION BATTERIE attenuation = 0 correspond à 1000mV, attn=1  à 3dB attn=2 à 6dB, attn=3 à 12 dB, pont diviseur (115k et 56k) sur expansion board V2.1A, 
+resolutionADC=4096#10 bits sur Lopy1 : 1024,  12 bits sur Lopy4 : 4096
+attn=1
+range=10**(3/20)*1000# 1412 pour 3 dB
+coeff_pont_div=(470+221)/221 
 
 nombre_capteurs_rx=0                #nombre de capteurs sur la balance RX
 premier_capteur_rx=0                 #indice du premier capteur RX
 
 nombre_capteurs=4                     #nombre de capteurs sur la balance TX, de 1 à 4 dans notre balance n°1
-premier_capteur =1                     #indice du premier capteur TX
-#indice        0               1             2             3              4             5            6            7             8          9           10        11        12         13       14         15
-tare =    [279600,  -232000,             0,    40470,   72660,   69060, -110000,   188850,  72500 ,     0     ,     0     ,     0    ,    0     ,    0     ,    0     ,    0      ] # tare  : valeur ADC sans rien sur le capteur  
-valeur =[1886000,  437500,   670900,  719900, 766150, 755500,  551000,  723000 , 103000,    1      ,     1     ,    1     ,    1     ,    1     ,    1     ,    1      ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
-etalon =[5202      ,       6930,       6930,    6930 ,      6930,     6930,     6930,        1550,     5202,     1     ,    1      ,    1     ,    1     ,    1     ,    1     ,    1      ]               #  poids de l'étalon en grammes
-coeff=   [0]*16
+premier_capteur =13                     #indice du premier capteur TX
+#indice        0               1             2             3              4             5            6            7             8          9           10        11        12         13             14         15        16
+tare =    [279600,  -232000,             0,    40470,   72660,   69060, -110000,   188850,  72500 ,     0     ,     0     ,     0    ,    0     ,-159327,-96885,  -29883,  66287]       # tare  : valeur ADC sans rien sur le capteur  
+valeur =[1886000,  437500,   670900,  719900, 766150, 755500,  551000,  723000 , 103000,    1      ,     1     ,    1     ,    1     , 503667 ,593906 ,660713,753035 ]  # etalonnage : valeur ADC avec l'étalon sur le capteur
+etalon =[5202      ,       6930,       6930,    6930 ,      6930,     6930,     6930,        1550,     5202,     1     ,    1      ,    1     ,    1     ,   6930 ,   6930 ,    6930,    6930      ]               #  poids de l'étalon en grammes
+coeff=   [0]*17
 i=0
 for g in tare:
     coeff[i] =   etalon[i] /(valeur[i] -tare[i]  )        #  coeff corrigé de la tare ADC, avec l'étalon sur le capteur, normée au poids, gramme/digit# poids_en_gr=((lecture_capteur[i]-tare[i])*mesure[i])
@@ -47,19 +50,19 @@ for g in tare:
 # en position 1 à 6 ::: capteurs 20 kg_série_A : mesures du 13 décembre 2017
 # en position 7 :::       tare_30kg = 188850 valeur ADC sans rien le 15/04/2017 etalon_30kg = 1550g    mesure_30kg = 723000 valeur ADC avec l'étalon sur la balance 
 # en position 8 :::        tare_50kg = 72500  sans rien dessus le 23/01/2017 etalon_50kg = 5202   grammes lecture_50kg = 103000
-# en position 9 à 14 ::: capteurs ADC, lectures brutes pour étalonnage
+# en position 9 à 12 ::: capteurs ADC, lectures brutes pour étalonnage
+# en position 13 à 16 ::: capteurs 20 kg_i : mesures du 1 septembre 2019
 precision=0.01                            #precision souhaitée pour valider l'acquisition d'une mesure
 nombre_point=5                         #c'est le nombre d'acquisitions faites par le HX711, qui en fait une moyenne appelée mesure
-delai_avant_acquisition= 0      #on attend delai secondes avant de lancer les mesures par le HX
 
-label='label'                            #champ de controle expéditeur sur label pour LORA RAW
-delimiteur='d'                           #champ delimiteur entre champs de la trame, ne pas utiliser d dans les autres champs!!!
+
+label='label'                            #trame : champ de controle expéditeur sur label
+delimiteur='d'                           #trame : champ delimiteur entre champs de la trame, ne pas utiliser d dans les autres champs, nom de la ruche entre autres!!!
 
 GAIN_distant=0.80                                                                  #paramètres de mesure de la température : à régler pour chaque Arduino
 OFFSET_distant=314                                                               #paramètres de mesure de la température : à régler pour chaque Arduino
 GAIN_local=1.22                                                                      #paramètres de mesure de la température : à régler pour chaque Arduino
 OFFSET_local=318                                                                   #paramètres de mesure de la température : à régler pour chaque Arduino
-
 
 # LoRa setup: TTN Node IDs 
 mode_lora='RAW'           #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we also call Raw-LoRa); LoRaWAN mode implements the full LoRaWAN stack for a class A device.
@@ -68,18 +71,14 @@ mode_lora='RAW'           #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we als
 #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
 LORA_FREQUENCY = 863000000       #parametres RAW
 data_rate=5                                       # set the LoRaWAN data rate DR_5
-dev_eui =( 0x74,0x65,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #30AEA4FFFE786574    à inverser
+dev_eui =( 0xD8,0x4A,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #à inverser  30aea4FFFE784ad8 ok
 #parametres OTAA donnés par TTN
 app_eui = ubinascii.unhexlify('BABE01D07ED5B370')#(0xBA,0xBE,0x01,0xD0,0x7E,0xD5,0xB3,0x70)# OTAA authentication parameters, à inverser70B3D57ED001BEBA, app_eui commune pour tous les bzzx de TTN (application fablablannionbzz
-app_key = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#pas  la bonne, c'est celle de APB .... 0xB1, 0x55, 0xBE, 0x4A, 0xF4, 0x3A, 0xC0, 0xCD, 0xDD, 0x7B, 0xCA, 0xA7, 0x77, 0x18, 0x0A, 0xCC
+app_key = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#pas  la bonne, 
 #parametres APB donnés par TTN
-dev_addr = struct.unpack(">l", ubinascii.unhexlify('26011EB8'))[0]#(0x26011EB8)              #parametres ABP 26011EB8
+dev_addr = struct.unpack(">l", ubinascii.unhexlify('26011B2D'))[0]            #parametres ABP 26011B2D
 nwk_swkey = ubinascii.unhexlify('A3BE3D74AF2179FAB9E11CFE07C54687')#(0xA3, 0xBE, 0x3D, 0x74, 0xAF, 0x21, 0x79, 0xFA, 0xB9, 0xE1, 0x1C, 0xFE, 0x07, 0xC5, 0x46, 0x87)#A3BE3D74AF2179FAB9E11CFE07C54687
 app_swkey = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#(0x83, 0x74, 0xD4, 0x71, 0x09, 0x60, 0xE6, 0x42, 0x1B, 0xDC, 0xF1, 0x5F, 0x63, 0x9E, 0x84, 0x11)#8374D4710960E6421BDCF15F639E8411
-
-tempo_lora_demarrage = 0    #le temps en secondes que la carte lora soit opérationnelle
-tempo_lora_emission = 0        #le temps en secondes que la carte lora finisse l'émission
-
 
 # LED color
 BLACK = 0x000000
