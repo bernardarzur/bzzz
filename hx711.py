@@ -1,10 +1,11 @@
 from machine import Pin
-import struct
+import machine
+import utime
 
 class HX711:
     def __init__(self, dout, pd_sck, gain=128, debug=False):
         self.pSCK = Pin(pd_sck, mode=Pin.OUT)
-        self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)
+        self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)# la pin est forcee en pull-down, mais pas de changement de consommation veille
 
         self.DEBUG = debug
         self.GAIN = 1
@@ -33,43 +34,40 @@ class HX711:
 
         self.pSCK.value(False)
         self.read()
-        print('Gain setted to {}'.format(self.GAIN))
+        print('Gain set to {}'.format(self.GAIN))
 
     def read(self):
+        #First wait for data ready, DOUT will be low when ready
         while not self.is_ready():
             pass
+        #disable interrupts to avoid problems during reading
+        #If SCK goes high longer than 65µs the chip enter power down state.
+        #So we must avoid interruots during reading
+        interrupt_status = machine.disable_irq()
 
-        dataBits = b''
+        dataBits = 0
 
-        for j in range(0, 3):
-            octet = 0
-            for i in range(0, 8):
-                self.pSCK.value(True)
-                octet <<= 1
-                bitLu = self.pOUT()
-                if bitLu: octet += 1
-                self.pSCK.value(False)
+        for i in range(0, 24):
+            self.pSCK.value(True)
+            dataBits <<= 1
+            utime.sleep_us(1)            #Minimum waiting time
+            self.pSCK.value(False)
+            bitLu = self.pOUT()
+            if bitLu: dataBits += 1
+            utime.sleep_us(1)            #Minimum waiting time
 
-            dataBits += bytes([octet])
-
-
-        """# set channel and gain factor for next reading
+        # set channel and gain factor for next reading
         for i in range(self.GAIN):
             self.pSCK.value(True)
-            self.pSCK.value(False)"""
+            utime.sleep_us(1)            #Minimum waiting time
+            self.pSCK.value(False)
+            utime.sleep_us(1)            #Minimum waiting time
 
-        # check for all 1
-        if self.DEBUG:
-            print('{}'.format(dataBits))
-        if dataBits[0] == 0xFF:
-            if self.DEBUG:
-                print('all true')
-            self.allTrue = True
-            return self.lastVal
-        self.allTrue = False
-#        readbits = ""
-
-        return struct.unpack('>i', (b'\0' if dataBits[0] >> 7 == 0 else b'\xff') + dataBits)[0]
+        #
+        machine.enable_irq(interrupt_status)        #Re enable interrupts
+        if dataBits >= 8388608:                 #negative value
+            dataBits = dataBits - 16777216
+        return dataBits
     """
     def read_average(self, times=3):
         sum = 0
@@ -103,7 +101,9 @@ class HX711:
         self.OFFSET = offset
     """
     def power_down(self):
+        #First force SCK down (but should be already DOWN
         self.pSCK.value(False)
+        #Then force SCK up, power down state will occur after 60µs
         self.pSCK.value(True)
 
     def power_up(self):
