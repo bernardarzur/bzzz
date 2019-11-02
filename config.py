@@ -1,6 +1,5 @@
 #accompagne TX_RX_v_18
-# configuration 1 :  ON VA CONFIGURER LE RX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
-# configuration 2 :  ON VA CONFIGURER LE TX; il y a nombre_capteurs_rx capteurs sur le RX; il y a nombre_capteurs capteurs sur le TX
+
 import ubinascii
 import struct
 w='bzz_34b0'                                              #nom de la ruche ou du RX,  circuit PROTO 5 : quatre hx711 (n°13 à 16), Lopy4_4ad8,, attention P18, P17 et P10 ne sont pas cablées sur le lopy
@@ -9,7 +8,7 @@ mode_lora='RAW'                                       #positionné à 'RAW,' en 
 nombre_capteurs=0                                   #nombre de capteurs sur la balance TX ou RX, 0 -> pas de capteurs : ce peut être le cas du RX, sinon de 1 à 4
 premier_capteur =0                                    #indice du premier capteur TX ou RX, de 0 à 3 (si nombre_capteurs = 4, alors premier_capteur=0)
 debug=1                                                     # normalement positionné à 0
-date=[2019, 9,23,10, 45, 0, 0, 0]              # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+date=[2019, 11,2,10, 0, 0, 0, 0]              # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
 sleep    =60000*10                                     #deepsleep en millisecondes
 timeout=60000*10                                     # 60000 millisecondes font une minute
 delai_local=2                                              #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout

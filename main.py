@@ -71,9 +71,9 @@ premier_capteur  =c.premier_capteur                 #premier_capteur  sur la bal
 
 # Init HX711 module, hx.tare(c.HX_TARE), hx.set_scale(c.HX_SCALE)#cf fichier config capteur_i= HX711(DOUT,SCK)
 capteur_0 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i
-capteur_1 = HX711(c.HX_DT_1, c.HX_SCK_1)     #capteur 20kg_i     
-capteur_2 = HX711(c.HX_DT_2, c.HX_SCK_2)     #capteur 20kg_i  
-capteur_3 = HX711(c.HX_DT_3, c.HX_SCK_3)     #capteur 20kg_i  
+capteur_1 = HX711(c.HX_DT_2, c.HX_SCK_2)     #capteur 20kg_i     
+capteur_2 = HX711(c.HX_DT_3, c.HX_SCK_3)     #capteur 20kg_i  
+capteur_3 = HX711(c.HX_DT_4, c.HX_SCK_4)     #capteur 20kg_i  
 
 capteurs=[capteur_0,capteur_1,capteur_2,capteur_3]
 tare =c.tare                                                  # tare_i : valeur ADC sans rien sur le capteur
@@ -110,7 +110,6 @@ while True:
             poids_en_gr_distant_total=0
             i=0
             if trame[0] ==label :                                             #vérification champ 0  pour controle destinataire, mode RAW
-                #temperature_distant   =(float(trame[1])/2.5-30)
                 v   =int(trame[1]) #tension_Batterie
                 temperature_local       =temperatureLopy(c.GAIN_local,c.OFFSET_local)            #trame [0]=label, trame [1]=  température, trame [2]=w 
                 for g in trame:
