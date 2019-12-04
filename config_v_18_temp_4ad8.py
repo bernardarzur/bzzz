@@ -63,10 +63,11 @@ dev_eui =( 0xD8,0x4A,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #à inverser  30aea4FF
 #parametres OTAA donnés par TTN
 app_eui = ubinascii.unhexlify('BABE01D07ED5B370')#(0xBA,0xBE,0x01,0xD0,0x7E,0xD5,0xB3,0x70)# OTAA authentication parameters, à inverser70B3D57ED001BEBA, app_eui commune pour tous les bzzx de TTN (application fablablannionbzz
 app_key = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#pas  la bonne, 
+
 #parametres APB donnés par TTN
-dev_addr = struct.unpack(">l", ubinascii.unhexlify('26011B2D'))[0]            #parametres ABP 26011B2D
-nwk_swkey = ubinascii.unhexlify('A3BE3D74AF2179FAB9E11CFE07C54687')#(0xA3, 0xBE, 0x3D, 0x74, 0xAF, 0x21, 0x79, 0xFA, 0xB9, 0xE1, 0x1C, 0xFE, 0x07, 0xC5, 0x46, 0x87)#A3BE3D74AF2179FAB9E11CFE07C54687
-app_swkey = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#(0x83, 0x74, 0xD4, 0x71, 0x09, 0x60, 0xE6, 0x42, 0x1B, 0xDC, 0xF1, 0x5F, 0x63, 0x9E, 0x84, 0x11)#8374D4710960E6421BDCF15F639E8411
+dev_addr = struct.unpack(">l", ubinascii.unhexlify('26011B2D'))[0]            #parametres ABP 26011B2D OK
+nwk_swkey = ubinascii.unhexlify('804867C0AC8F1FA302537D48FADAFA6E')
+app_swkey = ubinascii.unhexlify('FECE29BF4B5C94C74805EACDC1B69597')
 
 # LED color
 BLACK = 0x000000
