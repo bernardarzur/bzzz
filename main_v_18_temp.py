@@ -218,7 +218,7 @@ while True:
             s.setblocking(False)
             
         if mode_lora== 'APB'              : #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) ABP stands for Authentication By Personalisation. 
-            lora = LoRa(mode=LoRa.LORAWAN, frequency=c.LORA_FREQUENCY)      
+            lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.EU868)      
             lora.join(activation=LoRa.ABP, auth=(c.dev_addr,c.nwk_swkey, c.app_swkey))        # join a network using ABP (Activation By Personalization), Les clés ont été  fournies avant le joint par TTN (par ex).      
             s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)        # create a LoRa socket        
             s.setsockopt(socket.SOL_LORA, socket.SO_DR, data_rate)        # set the LoRaWAN data rate
