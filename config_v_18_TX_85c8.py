@@ -1,14 +1,14 @@
-#config.py accompagne TX_RX_v_18_temp et 4ad8
+#config.py accompagne TX_RX_v_18_temp et 85c8
 
 import ubinascii
 import struct
-w='bzz8'                                              #nom de la ruche ou du RX,  circuit PROTO 5 : quatre hx711 (n°13 à 16), Lopy4_4ad8,, attention P18, P17 et P10 ne sont pas cablées sur le lopy
+w='85c8'                                              #nom de la ruche ou du RX,  circuit PROTO 6 : quatre hx711 (n°17 à 20), Lopy4_85c8
 configuration='TX'                                     #positionné à 'TX,' ou ' RX ' pour écouter la ruche en configuration point à point
 mode_lora='RAW'                                       #positionné à 'RAW,' en RX  pour écouter la ruche en configuration point à point (idem pour TX dans ce cas), sinon TX vers le réseau TTN en 'APB' ou 'OTAA'
 nombre_capteurs=4                                   #nombre de capteurs sur la balance TX ou RX, 0 -> pas de capteurs : ce peut être le cas du RX, sinon de 1 à 4
 premier_capteur =0                                    #indice du premier capteur TX ou RX, de 0 à 3 (si nombre_capteurs = 4, alors premier_capteur=0)
-debug=0                                                # normalement positionné à 0
-date=[2019, 12, 10,19, 30, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+debug=1                                                # normalement positionné à 0
+date=[2020, 3, 29,17, 0, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
 sleep    =60000*10                                        #deepsleep en millisecondes
 timeout=60000*1                                      # 60000 millisecondes font une minute
 delai_local=2                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
@@ -19,11 +19,11 @@ delai_avant_acquisition= 0      #on attend delai secondes avant de lancer les me
 
 HX_DT_1    = 'P19'# brochage HX vers Lopy : ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7 : ne pas utiliser, P16 sert pour la batterie,
 HX_SCK_1  = 'P23'#brochage HX vers jauge 20kg ->Noir E-, Rouge E+, Vert  A+, Blanc A-  module 182409353771
-HX_DT_2    = 'P8'
+HX_DT_2    = 'P13'
 HX_SCK_2  = 'P22'
-HX_DT_3    = 'P15'
-HX_SCK_3  = 'P20'
-HX_DT_4    = 'P13'
+HX_DT_3    = 'P19'
+HX_SCK_3  = 'P23'
+HX_DT_4    = 'P18'
 HX_SCK_4  = 'P21'
 
 pinBatt='P16'# mesure TENSION BATTERIE attenuation = 0 correspond à 1000mV, attn=1  à 3dB attn=2 à 6dB, attn=3 à 12 dB, pont diviseur (115k et 56k) sur expansion board V2.1A, 
@@ -32,7 +32,7 @@ attn=1
 range=10**(3/20)*1000# 1412 pour 3 dB
 coeff_pont_div=(470+221)/221 #proto_5
 
-#indice        0               1             2             3         # capteurs 13 à 16 ::: capteurs 20 kg_i : mesures du 1 septembre 2019 sur proto 5
+#indice        0               1             2             3         # capteurs 17 à 20 ::: capteurs 20 kg_i : mesures du 1 avril 2020 sur proto 6
 tare =    [-159327,-96885,  -29883,  66287]       # tare  : valeur ADC sans rien sur le capteur  
 valeur =[503667 ,593906 ,660713,753035 ]       # etalonnage : valeur ADC avec l'étalon sur le capteur
 etalon =[6930 ,   6930 ,    6930,    6930      ]       #  poids de l'étalon en grammes
@@ -87,5 +87,5 @@ BLUE = 0x00007f
 bleu_pale=0x000008
 violet=0xFF33CC
 
-
+#(sysname='LoPy4', nodename='LoPy4', release='1.18.2.r1', version='v1.8.6-849-d6b3616 on 2019-02-22', machine='LoPy4 with ESP32', lorawan='1.0.2', sigfox='1.0.1')
 

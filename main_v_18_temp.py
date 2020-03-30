@@ -114,11 +114,9 @@ while True:
             trame=trame.split(delimiteur)                               #on vire le delimiteur et on met les data dans une liste            
             poids_en_gr_distant_total=0
             i=0
-            if trame[0] ==label :                                             #vérification champ 0  pour controle destinataire, mode RAW
-                v   =int(trame[1]) #tension_Batterie
-                temperature_local       =temperatureLopy(c.GAIN_local,c.OFFSET_local)            #trame [0]=label, trame [1]=  température, trame [2]=w 
+            if trame[0] ==label :                                             #vérification champ 0  pour controle destinataire, mode RAW#trame [0]=label, trame [1]=  tensionBatterie, trame [2]=w 
                 for g in trame:
-                    if i >=3:
+                    if i >=3 and i <= 7:
                         if g!='':
                             poids_en_gr_distant_total+=float(g)
                             print ("i ", i-2,"   g ", g, "    poids_en_gr_distant_total ", poids_en_gr_distant_total)
@@ -133,9 +131,9 @@ while True:
                 numero_trame+=1
             else:
                 print ("erreur transmission")                
-            print(trame_ch," poids_total: ", poids_en_gr_distant_total,  " T_RX: ", temperature_local,   " N_T: ", numero_trame, "tension_Batterie : ", v, "batt_local : ",  tensionBatterie())      
-        deltaT=time.time()-t0       #si pas de transmission pendant 2 fois le temps de deepsleep, on allume en rouge
-        if deltaT> c.sleep*2/1000:
+            print(trame_ch)      
+        deltaT=time.time()-t0       #si pas de transmission correcte pendant 2 fois le temps de deepsleep, on allume en rouge
+        if deltaT> c.sleep*2/1000 :
             pycom.rgbled(c.RED)
         else:
             pycom.rgbled(c.BLACK)            
@@ -151,11 +149,11 @@ while True:
             pycom.rgbled(c.bleu_pale)
             time.sleep(c.delai_flash_mise_en_route)
         trame=''
-        poids_en_gr=poids_en_gr_total=moyenne=tension=0
+        poids_en_gr_total=tension=0
         t1=moy=[0]*nombre_point
         for i in range(premier_capteur, nombre_capteurs+premier_capteur): #on fait la mesure sur les i capteur_i de premier_capteur à premier_capteur+nombre_capteurs
             capteur=capteurs[i]
-            lecture_capteur[i-premier_capteur]=n= moyenne=0
+            lecture_capteur[i-premier_capteur]=0
             capteur.power_up()#reveille le HX711 n°'capteur'
             time.sleep (c.delai_avant_acquisition)
             for n in range(0, nombre_point) :
@@ -166,29 +164,24 @@ while True:
                     pycom.rgbled(c.GREEN)
                     time.sleep (c.delai_avant_acquisition)
                 moy[n]=int(lecture_capteur[i-premier_capteur])
-                n+=1
             moy.sort()
             lecture_capteur=[0]*9
             poids_en_gr_total=0
             for n in range(1, nombre_point-1):#on élimine minimum et maximum
                 lecture_capteur[i-premier_capteur]+=moy[n]
-                n+=1
             lecture_capteur[i-premier_capteur]=int(lecture_capteur[i-premier_capteur]/(nombre_point-2))
             poids_en_gr_total+= lecture_capteur[i-premier_capteur]
             trame+=str( lecture_capteur[i-premier_capteur])+delimiteur            
             capteur.power_down()# put the ADC n° i in sleep mode 
-            i+=1
         for n in range(0, nombre_point) :
             t1[n]=batt.value()
             if debug:
                 print('tension_digits : ', t1[n], end='')  
-            n+=1
         t1.sort()
         tension=0
         for n in range(1, nombre_point-1):#on élimine minimum et maximum
             tension+=t1[n]
-            n+=1 
-        tension=int(tension*c.range/c.resolutionADC*c.coeff_pont_div /(nombre_point-2))#mesure de la tension Batterie du TX en mV
+        tension=int(tension*c.range/c.resolutionADC*c.coeff_pont_div /(nombre_point-2))#moyenne mesure de la tension Batterie du TX en mV
         if mode_lora=='RAW' :
             trame=label+delimiteur+str(tension)+delimiteur+w+delimiteur+trame
         else:
@@ -213,7 +206,7 @@ while True:
         
     if configuration=='TX': # On va émettre la trame LoRa par le TX, puis endormir le TX
         if mode_lora=='RAW'              : # RAW (transmission la plus rapide entre TX et RX point à point sans cryptage), LoRa-MAC (which we also call Raw-LoRa)
-            lora = LoRa(mode=LoRa.LORA, frequency=c.LORA_FREQUENCY)
+            lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868, frequency=c.LORA_FREQUENCY) #lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.EU868)
             s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
             s.setblocking(False)
             

@@ -1,14 +1,14 @@
-#config.py accompagne TX_RX_v_18_temp et 4ad8
+#config.py accompagne TX_RX_v_18_temp et 34b0
 
 import ubinascii
 import struct
-w='bzz8'                                              #nom de la ruche ou du RX,  circuit PROTO 5 : quatre hx711 (n°13 à 16), Lopy4_4ad8,, attention P18, P17 et P10 ne sont pas cablées sur le lopy
-configuration='TX'                                     #positionné à 'TX,' ou ' RX ' pour écouter la ruche en configuration point à point
+w='RX_34b0'                                              #nom de la ruche ou du RX,  circuit PROTO 5 : quatre hx711 (n°13 à 16), Lopy1_34b0
+configuration='RX'                                     #positionné à 'TX,' ou ' RX ' pour écouter la ruche en configuration point à point
 mode_lora='RAW'                                       #positionné à 'RAW,' en RX  pour écouter la ruche en configuration point à point (idem pour TX dans ce cas), sinon TX vers le réseau TTN en 'APB' ou 'OTAA'
-nombre_capteurs=4                                   #nombre de capteurs sur la balance TX ou RX, 0 -> pas de capteurs : ce peut être le cas du RX, sinon de 1 à 4
+nombre_capteurs=0                                   #nombre de capteurs sur la balance TX ou RX, 0 -> pas de capteurs : ce peut être le cas du RX, sinon de 1 à 4
 premier_capteur =0                                    #indice du premier capteur TX ou RX, de 0 à 3 (si nombre_capteurs = 4, alors premier_capteur=0)
-debug=0                                                # normalement positionné à 0
-date=[2019, 12, 10,19, 30, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
+debug=1                                                # normalement positionné à 0
+date=[2019, 12, 11,12, 0, 0, 0, 0]       # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
 sleep    =60000*10                                        #deepsleep en millisecondes
 timeout=60000*1                                      # 60000 millisecondes font une minute
 delai_local=2                                        #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
@@ -50,12 +50,7 @@ GAIN_distant=0.80                                                               
 OFFSET_distant=314                                                               #paramètres de mesure de la température : à régler pour chaque Arduino
 GAIN_local=1.22                                                                      #paramètres de mesure de la température : à régler pour chaque Arduino
 OFFSET_local=318                                                                   #paramètres de mesure de la température : à régler pour chaque Arduino
-capteur_temp='non'#'DHT11'
-#b'labeld4238dbzz8d-29d-83182d299d12d20d5\xb9\xd92019d12d17d20d5d58d484942dNoned\n'    
-#b'labeld4231dbzz8d-30d-83182d299d11d21d6\xf0G2019d12d17d19d45d54d385349dNoned\n'
-#b'labeld4234dbzz8d-30d-83182d299d11d20d5\xc9\x052019d12d17d19d25d48d203096dNoned\n'
-#labeld4240dbzz8d-31d-83182d299d11d21d61M2019d12d17d19d5d43d763021dNoned\n
-#labeld4243dbzz8d-30d-83182d299d11d20d6\x90\xa12019d12d17d19d1d16d271613dNoned\n
+capteur_temp='non' #si capteur_température capteur_temp= 'DHT11'
 pin_temp="P9"
 
 #mode LoRa:  RAW,  APB,  OTAA;  LoRa-MAC (which we also call Raw-LoRa); LoRaWAN mode implements the full LoRaWAN stack for a class A device.
@@ -64,7 +59,7 @@ pin_temp="P9"
 #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) et OTAA (mode complet mais, le plus lent, avec échange entre TX et récepteur)
 LORA_FREQUENCY = 863000000       #parametres RAW
 data_rate=5                                       # set the LoRaWAN data rate DR_5
-dev_eui =( 0xD8,0x4A,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #à inverser  30aea4FFFE784ad8 ok
+dev_eui =( 0xD8,0x4A,0x78,0xFE,0xFF,0xA4,0xAE,0x30)       #à inverser  30aea4FFFE784ad8 nok
 #parametres OTAA donnés par TTN
 app_eui = ubinascii.unhexlify('BABE01D07ED5B370')#(0xBA,0xBE,0x01,0xD0,0x7E,0xD5,0xB3,0x70)# OTAA authentication parameters, à inverser70B3D57ED001BEBA, app_eui commune pour tous les bzzx de TTN (application fablablannionbzz
 app_key = ubinascii.unhexlify('8374D4710960E6421BDCF15F639E8411')#pas  la bonne, 
