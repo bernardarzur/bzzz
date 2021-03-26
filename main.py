@@ -102,8 +102,12 @@ poids_en_gr=poids_en_gr_total=moyenne=tension=0
 if mode_lora== 'APB'              : #APB (on émet en mode crypté sans recevoir d'ACK de la part du récepteur qui est le RX ou la GW) ABP stands for Authentication By Personalisation.
     print('APB Lora join')
     lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.EU868)
-    lora.join(activation=LoRa.ABP, auth=(c.dev_addr,c.nwk_swkey, c.app_swkey))        # join a network using ABP (Activation By Personalization), Les clés ont été  fournies avant le joint par TTN (par ex).
-
+    lora.nvram_restore()
+    if lora.has_joined() :
+        print('Lora config restored')
+    else :
+        print('ABP Join')
+        lora.join(activation=LoRa.ABP, auth=(c.dev_addr,c.nwk_swkey, c.app_swkey))        # join a network using ABP (Activation By Personalization), Les clés ont été  fournies avant le joint par TTN (par ex).
 
 while True:
     if configuration== 'RX': # On va écouter le TX  en point à point seulement (la configuration du TX dans ce cas est forcement en RAW) et lire le RX si besoin,
@@ -233,13 +237,13 @@ while True:
         print('sent APB mode : ' + trame)
         time.sleep(c.tempo_lora_emission)
         s.setblocking(False)
+        lora.nvram_save() #sauvegarde config Lora avant deep sleep
         numero_trame+=1
         pycom.rgbled(c.RED)                                             # flash rouge
-        #time.sleep (c.delai_flash_mise_en_route)
+        time.sleep (c.delai_flash_mise_en_route)
         if debug:
             print("poids_en_gr_total", poids_en_gr_total, " tension_Batterie: ", tension, '****'," N_T: ",  numero_trame," ",  trame)
-        lora.nvram_save() #sauvegarde config Lora avant deep sleep    
-        #machine.deepsleep(c.sleep)                                     #eteint Lopy
+        machine.deepsleep(c.sleep)                                     #eteint Lopy
 
     deltaT2=time.time()-t2 #temps écoulé depuis la dernière mesure locale
     if configuration=='RX' and nombre_capteurs!=0 and deltaT2 >=sleep/1000:#on enregistre la mesure du RX si deltaT2 est égal à sleep

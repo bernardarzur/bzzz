@@ -9,12 +9,12 @@ nombre_capteurs=0                                   #nombre de capteurs sur la b
 premier_capteur =0                                    #indice du premier capteur TX ou RX, de 0 à 3 (si nombre_capteurs = 4, alors premier_capteur=0)
 debug=1                                                     # normalement positionné à 0
 date=[2019, 11,2,10, 0, 0, 0, 0]              # On met RX à l'heure, ne sert pas pour les TX, [aaaa,m,j,h,mn,s,ms,0], car lors du passage en deepsleep, TX perd la date?
-sleep    =600*10                                     #deepsleep en millisecondes
+sleep    =6000*10                                     #deepsleep en millisecondes
 timeout=60000*10                                     # 60000 millisecondes font une minute
 delai_local=2                                              #on attend delai local SECONDES avant de lancer une mesure, doit être inférieure à timeout
 delai_flash_mise_en_route=0.02                #durée du flash de la LED
 tempo_lora_demarrage = 0                        #le temps en secondes que la carte lora soit opérationnelle
-tempo_lora_emission = 20                           #le temps en secondes que la carte lora finisse l'émission
+tempo_lora_emission = 5                           #le temps en secondes que la carte lora finisse l'émission
 delai_avant_acquisition= 0                         #on attend delai secondes avant de lancer les mesures par le HX
 
 HX_DT_1    = 'P19'   # brochage HX vers Lopy : ne pas utiliser P12 qui sert pour les reboots ni P2,#P18 a P13 sont des INPUT, LoRa utilise  P5, P6, P7 : ne pas utiliser, P16 sert pour la batterie,
